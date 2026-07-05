@@ -1,259 +1,195 @@
-﻿const categories = {
-  food: {
-    name: "美食",
-    icon: "🍜",
-    title: "今天吃了什么",
-    copy: "拍照或上传菜品，自动保留整盘菜，并在右下角生成卡路里角标。",
-    card: "整盘菜 + 卡路里",
-    bg: "linear-gradient(160deg, #fff0cf, #ffd8bd)",
-    emptyTitle: "拍下整盘菜",
-    emptyHint: "让盘子在画面中央，系统会尽量保留整盘菜。",
-    titlePlaceholder: "例如：番茄牛腩饭",
-    placeLabel: "来自哪家店",
-    placePlaceholder: "例如：街角小馆",
-    extraLabel: "份量/口味",
-    extraPlaceholder: "例如：正常份、少油",
-    resultCaption: "整盘抠图",
-  },
-  tea: {
-    name: "奶茶",
-    icon: "🧋",
-    title: "今天喝点甜的",
-    copy: "记录奶茶照片，自动生成甜度、冰量和心情标签，做一张饮品小卡。",
-    card: "甜度 + 冰量",
-    bg: "linear-gradient(160deg, #ffe2ed, #dff3e3)",
-    emptyTitle: "拍下这杯奶茶",
-    emptyHint: "让杯身露完整，角标会生成今日饮品状态。",
-    titlePlaceholder: "例如：茉莉奶绿",
-    placeLabel: "来自哪家店",
-    placePlaceholder: "例如：喜茶、古茗、楼下奶茶店",
-    extraLabel: "糖冰偏好",
-    extraPlaceholder: "例如：三分糖、少冰",
-    resultCaption: "饮品抠图",
-  },
-  person: {
-    name: "人物",
-    icon: "🧑‍🎨",
-    title: "今天的我/朋友",
-    copy: "保存人物照片，生成氛围标签，适合做穿搭、发型或聚会记录。",
-    card: "氛围标签",
-    bg: "linear-gradient(160deg, #e5e4ff, #f9dfc9)",
-    emptyTitle: "拍下人物瞬间",
-    emptyHint: "人物居中会更好，系统会保留中间主体。",
-    titlePlaceholder: "例如：周末穿搭",
-    placeLabel: "地点",
-    placePlaceholder: "例如：咖啡店、公司楼下",
-    extraLabel: "氛围",
-    extraPlaceholder: "例如：松弛、复古、通勤",
-    resultCaption: "人物抠图",
-  },
-  life: {
-    name: "小物",
-    icon: "🎁",
-    title: "今天遇见的小物",
-    copy: "拍下香水、书、礼物或可爱小东西，生成收藏标签。",
-    card: "收藏标签",
-    bg: "linear-gradient(160deg, #dcefff, #fff3b8)",
-    emptyTitle: "拍下小物件",
-    emptyHint: "把物品放在干净背景上，卡片会更漂亮。",
-    titlePlaceholder: "例如：新买的杯子",
-    placeLabel: "来自哪里",
-    placePlaceholder: "例如：商场、朋友送的、网购",
-    extraLabel: "收藏理由",
-    extraPlaceholder: "例如：颜色好看、很实用",
-    resultCaption: "小物抠图",
-  },
-};
+const storeKey = "food-daily-widget-records-v3";
+const backgroundKey = "food-daily-widget-background";
+const appName = "今日贴贴";
+const legacyKeys = ["inspiration-album-records-v2", "food-cutout-records-v1"];
 
+const homeScreen = document.querySelector("#homeScreen");
+const timelineScreen = document.querySelector("#timelineScreen");
+const currentDateTitle = document.querySelector("#currentDateTitle");
+const recordCount = document.querySelector("#recordCount");
+const todayKcal = document.querySelector("#todayKcal");
+const todayItems = document.querySelector("#todayItems");
+const stickerLayer = document.querySelector("#stickerLayer");
+const emptyBoard = document.querySelector("#emptyBoard");
+const widgetBoard = document.querySelector("#widgetBoard");
+const monthTitle = document.querySelector("#monthTitle");
+const monthSubtitle = document.querySelector("#monthSubtitle");
+const monthGrid = document.querySelector("#monthGrid");
+const monthCupCount = document.querySelector("#monthCupCount");
+const monthShopCount = document.querySelector("#monthShopCount");
+const monthStickerStrip = document.querySelector("#monthStickerStrip");
+const dailyWall = document.querySelector("#dailyWall");
+const activityDateStrip = document.querySelector("#activityDateStrip");
+const calendarPanel = document.querySelector("#calendarPanel");
+const activityTitle = document.querySelector("#activityTitle");
+const activitySubtitle = document.querySelector("#activitySubtitle");
+const backgroundPicker = document.querySelector("#backgroundPicker");
+const activityToolPanel = document.querySelector("#activityToolPanel");
+const timelineList = document.querySelector("#timelineList");
+const captureDialog = document.querySelector("#captureDialog");
+const editDialog = document.querySelector("#editDialog");
+const recordForm = document.querySelector("#recordForm");
+const editForm = document.querySelector("#editForm");
+const saveRecord = document.querySelector("#saveRecord");
 const camera = document.querySelector("#camera");
 const emptyState = document.querySelector("#emptyState");
-const toggleCamera = document.querySelector("#toggleCamera");
-const takePhoto = document.querySelector("#takePhoto");
-const fileInput = document.querySelector("#fileInput");
-const autoCutout = document.querySelector("#autoCutout");
 const canvas = document.querySelector("#captureCanvas");
-const originalPreview = document.querySelector("#originalPreview");
+const cameraAction = document.querySelector("#cameraAction");
+const fileInput = document.querySelector("#fileInput");
 const cutoutPreview = document.querySelector("#cutoutPreview");
 const smartBadge = document.querySelector("#smartBadge");
 const recordDate = document.querySelector("#recordDate");
-const recordForm = document.querySelector("#recordForm");
-const clearForm = document.querySelector("#clearForm");
-const saveButton = recordForm.querySelector("button[type=\"submit\"]");
-const savedRecordsEl = document.querySelector("#savedRecords");
-const homeView = document.querySelector("#homeView");
-const studioView = document.querySelector("#studioView");
-const savedView = document.querySelector("#savedView");
-const categoryGrid = document.querySelector("#categoryGrid");
-const studioKicker = document.querySelector("#studioKicker");
-const studioTitle = document.querySelector("#studioTitle");
-const studioCopy = document.querySelector("#studioCopy");
-const emptyTitle = document.querySelector("#emptyTitle");
-const emptyHint = document.querySelector("#emptyHint");
-const resultCaption = document.querySelector("#resultCaption");
 const recordTitle = document.querySelector("#recordTitle");
-const recordPlace = document.querySelector("#recordPlace");
-const recordExtra = document.querySelector("#recordExtra");
-const placeLabel = document.querySelector("#placeLabel");
-const extraLabel = document.querySelector("#extraLabel");
-const exportJson = document.querySelector("#exportJson");
-const editDialog = document.querySelector("#editDialog");
-const editForm = document.querySelector("#editForm");
-const cancelEdit = document.querySelector("#cancelEdit");
+const recordKcal = document.querySelector("#recordKcal");
+const recordShop = document.querySelector("#recordShop");
+const importBackupInput = document.querySelector("#importBackup");
 
-const storeKey = "inspiration-album-records-v2";
-let activeCategory = "food";
-let previousView = "home";
+let selectedDate = today();
+let displayMonth = selectedDate.slice(0, 7);
 let cameraStream = null;
 let currentOriginal = "";
 let currentCutout = "";
-let currentBadge = "";
+let dragState = null;
+let currentBackground = localStorage.getItem(backgroundKey) || "garden";
+let captureReady = false;
 
-recordDate.value = today();
-renderCategories();
-renderRecords();
+migrateRecords();
+recordDate.value = selectedDate;
+backgroundPicker.value = currentBackground;
+applyBackground();
+renderAll();
+document.title = appName;
 
-categoryGrid.addEventListener("click", (event) => {
-  const card = event.target.closest("button[data-category]");
-  if (!card) return;
-  openStudio(card.dataset.category);
+bind("#prevDay", "click", () => changeDay(-1));
+bind("#nextDay", "click", () => changeDay(1));
+bind("#openTimeline", "click", showTimeline);
+bind("#timelineNav", "click", showTimeline);
+bind("#homeNav", "click", showHome);
+bind("#backHome", "click", showHome);
+bind("#openCapture", "click", openCapture);
+bind("#closeCapture", "click", closeCapture);
+bind("#clearForm", "click", resetCaptureForm);
+bind("#installHelp", "click", showInstallHelp);
+bind("#exportBackupHome", "click", exportBackup);
+bind("#exportToday", "click", exportTodayImage);
+bind("#exportMonth", "click", exportMonthImage);
+bind("#exportBackup", "click", exportBackup);
+bind("#toggleTools", "click", toggleToolsPanel);
+bind("#prevMonth", "click", () => changeMonth(-1));
+bind("#nextMonth", "click", () => changeMonth(1));
+bind("#clearToday", "click", clearTodayRecords);
+bind("#deleteEdit", "click", deleteEditingRecord);
+bind("#toggleCalendar", "click", toggleCalendarPanel);
+backgroundPicker.addEventListener("change", updateBackground);
+importBackupInput.addEventListener("change", importBackup);
+
+widgetBoard.addEventListener("pointermove", handleDragMove);
+widgetBoard.addEventListener("pointerup", endDrag);
+widgetBoard.addEventListener("pointercancel", endDrag);
+
+stickerLayer.addEventListener("pointerdown", (event) => {
+  const sticker = event.target.closest(".food-sticker");
+  if (!sticker) return;
+  const board = stickerLayer.getBoundingClientRect();
+  const rect = sticker.getBoundingClientRect();
+  dragState = {
+    id: sticker.dataset.id,
+    pointerId: event.pointerId,
+    offsetX: event.clientX - rect.left,
+    offsetY: event.clientY - rect.top,
+    board,
+  };
+  sticker.setPointerCapture(event.pointerId);
 });
 
-document.querySelector("#backHome").addEventListener("click", showHome);
-document.querySelector("#openSavedFromHome").addEventListener("click", () => showSaved("home"));
-document.querySelector("#openSavedFromStudio").addEventListener("click", () => showSaved("studio"));
-document.querySelector("#backFromSaved").addEventListener("click", () => {
-  if (previousView === "studio") showStudioOnly();
-  else showHome();
+stickerLayer.addEventListener("dblclick", (event) => {
+  const sticker = event.target.closest(".food-sticker");
+  if (sticker) openEdit(sticker.dataset.id);
 });
 
-toggleCamera.addEventListener("click", async () => {
-  if (cameraStream) {
-    stopCamera();
+timelineList.addEventListener("click", (event) => {
+  const item = event.target.closest(".timeline-item[data-id]");
+  if (item) openEdit(item.dataset.id);
+});
+
+activityDateStrip.addEventListener("click", (event) => {
+  const item = event.target.closest("button[data-date]");
+  if (!item) return;
+  selectedDate = item.dataset.date;
+  displayMonth = selectedDate.slice(0, 7);
+  renderAll();
+});
+monthGrid.addEventListener("click", (event) => {
+  const item = event.target.closest("button[data-date]");
+  if (!item) return;
+  selectedDate = item.dataset.date;
+  displayMonth = selectedDate.slice(0, 7);
+  renderAll();
+});
+
+cameraAction.addEventListener("click", async () => {
+  if (captureReady) {
+    resetCapturedPreview();
+    await openCamera();
     return;
   }
-
-  try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
-    camera.srcObject = cameraStream;
-    camera.classList.add("active");
-    emptyState.hidden = true;
-    takePhoto.disabled = false;
-    toggleCamera.textContent = "关闭相机";
-  } catch (error) {
-    alert("无法打开相机，请检查浏览器权限，或改用上传照片。");
+  if (!cameraStream) {
+    await openCamera();
+    return;
   }
+  await captureFromCamera();
 });
-
-takePhoto.addEventListener("click", () => {
-  if (!camera.videoWidth) return;
-  canvas.width = camera.videoWidth;
-  canvas.height = camera.videoHeight;
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  ctx.drawImage(camera, 0, 0, canvas.width, canvas.height);
-  setImage(canvas.toDataURL("image/jpeg", 0.92), today());
-});
-
 fileInput.addEventListener("change", async (event) => {
   const file = event.target.files?.[0];
   if (!file) return;
   const dataUrl = await readFile(file);
-  const compactUrl = await compressDataUrl(dataUrl, 1200, 0.82);
-  setImage(compactUrl, toDateInputValue(new Date(file.lastModified || Date.now())));
+  await processSelectedImage(await compressDataUrl(dataUrl, 1300, 0.84));
 });
 
-autoCutout.addEventListener("click", async () => {
-  if (!currentOriginal) return;
-  autoCutout.disabled = true;
-  autoCutout.textContent = "处理中";
-  try {
-    const result = await makeCutout(currentOriginal, activeCategory);
-    currentCutout = result.image;
-    currentBadge = createBadge(activeCategory, recordTitle.value);
-    cutoutPreview.src = currentCutout;
-    smartBadge.textContent = currentBadge;
-    smartBadge.hidden = false;
-  } finally {
-    autoCutout.disabled = false;
-    autoCutout.textContent = "自动抠图";
-  }
+
+recordTitle.addEventListener("input", updateSmartKcal);
+recordKcal.addEventListener("input", () => {
+  smartBadge.textContent = `${Number(recordKcal.value || 0)} kcal`;
+  smartBadge.hidden = !recordKcal.value;
 });
 
 recordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  if (!currentOriginal) {
-    alert("请先拍照或上传照片。");
+  if (!currentCutout) {
+    alert("请先拍照或上传照片，等待自动抠图完成后再加入今日。");
     return;
   }
-
-  saveButton.disabled = true;
-  saveButton.textContent = "保存中";
-
+  saveRecord.disabled = true;
+  saveRecord.textContent = "处理中";
   try {
-    if (!currentCutout) {
-      const result = await makeCutout(currentOriginal, activeCategory);
-      currentCutout = result.image;
-    }
-    if (!currentBadge) currentBadge = createBadge(activeCategory, recordTitle.value);
-    const storedImage = await compressDataUrl(currentCutout || currentOriginal, 720, 0.78);
-
-  const form = new FormData(recordForm);
-  const title = String(form.get("recordTitle") || "").trim() || defaultTitle(activeCategory);
-  const record = {
-    id: crypto.randomUUID(),
-    category: activeCategory,
-    date: form.get("recordDate"),
-    title,
-    place: String(form.get("recordPlace") || "").trim(),
-    extra: String(form.get("recordExtra") || "").trim(),
-    notes: String(form.get("recordNotes") || "").trim(),
-    badge: currentBadge,
-    original: "",
-    cutout: storedImage,
-    createdAt: new Date().toISOString(),
-  };
-
-  const records = loadRecords();
-  records.unshift(record);
-  saveRecords(records);
-  resetCapture();
-  renderRecords();
-  showSaved("studio");
+    const title = recordTitle.value.trim() || "未命名食物";
+    const kcal = Number(recordKcal.value || estimateCalories(title));
+    const storedImage = await compressDataUrl(currentCutout, 680, 0.82);
+    const records = loadRecords();
+    const placement = nextStickerPlacement(recordsForDate(recordDate.value || selectedDate).length);
+    records.unshift({
+      id: crypto.randomUUID(),
+      date: recordDate.value || selectedDate,
+      title,
+      kcal,
+      shop: recordShop.value.trim(),
+      background: currentBackground,
+      cutout: storedImage,
+      createdAt: new Date().toISOString(),
+      x: placement.x,
+      y: placement.y,
+      rotate: placement.rotate,
+    });
+    saveRecords(records);
+    selectedDate = recordDate.value || selectedDate;
+    closeCapture();
+    renderAll();
   } catch (error) {
     console.error(error);
-    alert("保存失败：图片太大或浏览器存储空间不足。请刷新页面后重试，或先删除一些旧记录。");
+    alert("保存失败：图片可能太大，请换一张较小图片或删除旧记录后再试。");
   } finally {
-    saveButton.disabled = false;
-    saveButton.textContent = "保存这张";
-  }
-});
-
-clearForm.addEventListener("click", () => {
-  recordForm.reset();
-  recordDate.value = today();
-  applyCategory(activeCategory);
-});
-
-savedRecordsEl.addEventListener("click", (event) => {
-  const button = event.target.closest("button[data-action]");
-  if (!button) return;
-  const id = button.dataset.id;
-  const records = loadRecords();
-  const record = records.find((item) => item.id === id);
-  if (!record) return;
-
-  if (button.dataset.action === "edit") {
-    document.querySelector("#editId").value = record.id;
-    document.querySelector("#editDate").value = record.date;
-    document.querySelector("#editTitle").value = record.title;
-    document.querySelector("#editPlace").value = record.place;
-    document.querySelector("#editExtra").value = record.extra;
-    document.querySelector("#editNotes").value = record.notes;
-    editDialog.showModal();
-  }
-
-  if (button.dataset.action === "delete") {
-    saveRecords(records.filter((item) => item.id !== id));
-    renderRecords();
+    saveRecord.disabled = false;
+    saveRecord.textContent = "加入今日";
   }
 });
 
@@ -265,119 +201,582 @@ editForm.addEventListener("submit", (event) => {
     return {
       ...record,
       date: document.querySelector("#editDate").value,
-      title: document.querySelector("#editTitle").value.trim() || defaultTitle(record.category),
-      place: document.querySelector("#editPlace").value.trim(),
-      extra: document.querySelector("#editExtra").value.trim(),
-      notes: document.querySelector("#editNotes").value.trim(),
+      title: document.querySelector("#editTitle").value.trim(),
+      kcal: Number(document.querySelector("#editKcal").value || 0),
+      shop: document.querySelector("#editShop").value.trim(),
     };
   });
   saveRecords(records);
   editDialog.close();
-  renderRecords();
+  renderAll();
 });
 
-cancelEdit.addEventListener("click", () => editDialog.close());
+function showInstallHelp() {
+  alert("把今日贴贴安装到桌面：\n\n1. 先用手机浏览器打开 GitHub Pages 链接。\n2. iPhone：Safari 点分享按钮，再点添加到主屏幕。\n3. 安卓 Chrome：点右上角菜单，再点添加到主屏幕或安装应用。\n\n记录会保存在当前手机浏览器里，换设备前记得导出备份。");
+}
 
-exportJson.addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify(loadRecords(), null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
+function exportBackup() {
+  const data = {
+    app: appName,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    background: currentBackground,
+    records: loadRecords(),
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const link = document.createElement("a");
-  link.href = url;
-  link.download = `inspiration-records-${today()}.json`;
+  link.href = URL.createObjectURL(blob);
+  link.download = `今日贴贴备份-${today()}.json`;
   link.click();
-  URL.revokeObjectURL(url);
-});
-
-function renderCategories() {
-  categoryGrid.innerHTML = Object.entries(categories)
-    .map(([key, category]) => `
-      <button class="category-card" type="button" data-category="${key}" data-icon="${category.icon}" style="--card-bg: ${category.bg}">
-        <span class="category-pill">${escapeHtml(category.card)}</span>
-        <div>
-          <h3>${escapeHtml(category.name)}</h3>
-          <p>${escapeHtml(category.copy)}</p>
-        </div>
-      </button>`)
-    .join("");
+  URL.revokeObjectURL(link.href);
 }
 
-function openStudio(categoryKey) {
-  activeCategory = categoryKey;
-  applyCategory(categoryKey);
-  showStudioOnly();
+async function importBackup(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  try {
+    const backup = JSON.parse(await file.text());
+    const records = Array.isArray(backup) ? backup : backup.records;
+    if (!Array.isArray(records)) throw new Error("Invalid backup");
+    if (!confirm(`导入后会替换当前浏览器里的 ${loadRecords().length} 条记录，确定继续吗？`)) return;
+    saveRecords(records);
+    if (backup.background) {
+      currentBackground = backup.background;
+      localStorage.setItem(backgroundKey, currentBackground);
+      backgroundPicker.value = currentBackground;
+      applyBackground();
+    }
+    selectedDate = records[0]?.date || today();
+    displayMonth = selectedDate.slice(0, 7);
+    renderAll();
+    alert("备份已导入。");
+  } catch (error) {
+    alert("导入失败，请确认选择的是今日贴贴导出的 JSON 备份文件。");
+  } finally {
+    event.target.value = "";
+  }
+}
+function recordImage(record) {
+  return record?.cutout || record?.image || record?.original || record?.photo || record?.src || "";
 }
 
-function applyCategory(categoryKey) {
-  const category = categories[categoryKey];
-  studioKicker.textContent = category.name;
-  studioTitle.textContent = category.title;
-  studioCopy.textContent = category.copy;
-  emptyTitle.textContent = category.emptyTitle;
-  emptyHint.textContent = category.emptyHint;
-  resultCaption.textContent = category.resultCaption;
-  recordTitle.placeholder = category.titlePlaceholder;
-  recordPlace.placeholder = category.placePlaceholder;
-  recordExtra.placeholder = category.extraPlaceholder;
-  placeLabel.textContent = category.placeLabel;
-  extraLabel.textContent = category.extraLabel;
+function renderAll() {
+  renderHeader();
+  renderStickers();
+  renderMonthCalendar();
+  renderActivityDateStrip();
+  renderDailyWall();
+  renderTimeline();
+}
+
+function renderHeader() {
+  const records = recordsForDate(selectedDate);
+  const kcal = totalKcal(records);
+  currentDateTitle.textContent = dateTitle(selectedDate);
+  recordCount.textContent = String(records.length);
+  todayKcal.textContent = `${kcal} kcal`;
+  todayItems.textContent = String(records.length);
+}
+
+function renderStickers() {
+  const records = recordsForDate(selectedDate);
+  emptyBoard.hidden = records.length > 0;
+  stickerLayer.innerHTML = records.map((record) => `
+    <article class="food-sticker" data-id="${record.id}" style="left:${record.x ?? 30}%; top:${record.y ?? 30}%; --rotate:${record.rotate ?? 0}deg; transform: rotate(var(--rotate));">
+      <div class="sticker-image-wrap">
+        <img src="${escapeAttr(recordImage(record))}" alt="${escapeAttr(record.title)}" />
+        <span class="sticker-kcal">${record.kcal || 0} kcal</span>
+      </div>
+      <strong class="sticker-name">${escapeHtml(record.title)}</strong>
+      <time class="sticker-time">${timeText(record.createdAt)}</time>
+    </article>`).join("");
+}
+
+function renderMonthCalendar() {
+  const records = loadRecords();
+  const monthDate = new Date(`${displayMonth}-01T00:00:00`);
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const monthRecords = records.filter((record) => record.date?.startsWith(displayMonth));
+  const daysWithRecords = new Set(monthRecords.map((record) => record.date));
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const startDay = new Date(year, month, 1).getDay();
+  const cells = [];
+
+  for (let i = 0; i < startDay; i += 1) cells.push(`<span class="month-cell empty-cell"></span>`);
+  for (let day = 1; day <= totalDays; day += 1) {
+    const date = `${displayMonth}-${String(day).padStart(2, "0")}`;
+    const dayRecords = recordsForDate(date);
+    const preview = dayRecords.slice(0, 3);
+    const active = date === selectedDate ? " active" : "";
+    const scene = renderCalendarScene(dayRecords, day);
+    cells.push(`
+      <button class="month-cell${active}" type="button" data-date="${date}">
+        ${scene}
+        ${dayRecords.length > 0 ? `<i>${dayRecords.length}</i>` : ""}
+      </button>`);
+  }
+
+  monthTitle.textContent = `${year}年${month + 1}月`;
+  monthSubtitle.textContent = `${daysWithRecords.size} 天有记录 · ${monthRecords.length} 份食物`;
+  monthCupCount.textContent = String(monthRecords.length);
+  monthShopCount.textContent = `${daysWithRecords.size} 天有记录`;
+  monthStickerStrip.innerHTML = monthRecords.slice(0, 10).map((record) => `<img src="${escapeAttr(recordImage(record))}" alt="${escapeAttr(record.title)}" />`).join("");
+  monthGrid.innerHTML = cells.join("");
+}
+
+function renderCalendarScene(records, day, background = dayBackground(records)) {
+  const stickers = records.slice(0, 6).map((record, index) => {
+    const fallback = nextStickerPlacement(index);
+    const x = record.x ?? fallback.x;
+    const y = record.y ?? fallback.y;
+    const rotate = record.rotate ?? fallback.rotate;
+    return `<img src="${escapeAttr(recordImage(record))}" alt="${escapeAttr(record.title)}" style="left:${x}%; top:${y}%; transform: rotate(${rotate}deg);" />`;
+  }).join("");
+  return `
+    <div class="month-day-scene" data-bg="${escapeAttr(background)}">
+      <span class="month-day-number">${day}</span>
+      <div class="month-scene-stickers">${stickers}</div>
+    </div>`;
+}
+function dayBackground(records) {
+  return records.find((record) => record.background)?.background || currentBackground;
+}
+function renderActivityDateStrip() {
+  const dates = weekDates(selectedDate);
+  activityDateStrip.innerHTML = dates.map((date) => {
+    const dateValue = toDateInputValue(date);
+    const records = recordsForDate(dateValue);
+    const active = dateValue === selectedDate ? " active" : "";
+    const hasRecords = records.length ? " has-records" : "";
+    return `<button class="activity-date-pill${active}${hasRecords}" type="button" data-date="${dateValue}">
+      <i>${records.length ? "✓" : ""}</i>
+      <span>${weekday(date)}</span>
+      <strong>${date.getDate()}</strong>
+    </button>`;
+  }).join("");
+}
+function renderDailyWall() {
+  const records = recordsForDate(selectedDate);
+  activityTitle.textContent = `${formatMonthDay(selectedDate)} 活动动态`;
+  activitySubtitle.textContent = records.length ? `${records.length} 张贴纸 · ${totalKcal(records)} kcal` : "这一天还没有活动贴纸。";
+  dailyWall.innerHTML = records.length ? records.map((record, index) => {
+    const fallback = nextStickerPlacement(index);
+    const x = record.x ?? fallback.x;
+    const y = record.y ?? fallback.y;
+    const rotate = record.rotate ?? fallback.rotate;
+    return `
+      <article class="daily-wall-sticker" style="left:${x}%; top:${y}%; --rotate:${rotate}deg; transform: rotate(var(--rotate));">
+        <img src="${escapeAttr(recordImage(record))}" alt="${escapeAttr(record.title)}" />
+        <strong>${escapeHtml(record.title)}</strong>
+        <span>${timeText(record.createdAt)}</span>
+      </article>`;
+  }).join("") : "";
+}
+
+function renderTimeline() {
+  const records = recordsForDate(selectedDate);
+  timelineList.innerHTML = records.length ? records.map((record) => {
+    const note = record.shop || record.notes || "";
+    const title = record.title && record.title !== "未命名食物" ? record.title : "";
+    return `
+    <article class="timeline-item" data-id="${record.id}" role="button" tabindex="0">
+      <div>
+        <time class="timeline-time">${formatMonthDay(record.date)} ${timeText(record.createdAt)}</time>
+        ${title ? `<strong class="timeline-title">${escapeHtml(title)}</strong>` : ""}
+        ${note ? `<p class="timeline-note">${escapeHtml(note)}</p>` : ""}
+      </div>
+      <div class="timeline-image">
+        <img src="${escapeAttr(recordImage(record))}" alt="${escapeAttr(record.title)}" />
+        <span class="timeline-kcal">${record.kcal || 0} kcal</span>
+      </div>
+    </article>`;
+  }).join("") : '<p class="timeline-note empty-timeline">这一天还没有活动记录。</p>';
+}
+function handleDragMove(event) {
+  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  const sticker = stickerLayer.querySelector(`[data-id="${dragState.id}"]`);
+  if (!sticker) return;
+  const x = clamp(((event.clientX - dragState.board.left - dragState.offsetX) / dragState.board.width) * 100, 0, 78);
+  const y = clamp(((event.clientY - dragState.board.top - dragState.offsetY) / dragState.board.height) * 100, 0, 78);
+  sticker.style.left = `${x}%`;
+  sticker.style.top = `${y}%`;
+}
+
+function endDrag(event) {
+  if (!dragState || event.pointerId !== dragState.pointerId) return;
+  const sticker = stickerLayer.querySelector(`[data-id="${dragState.id}"]`);
+  if (sticker) {
+    const records = loadRecords().map((record) => record.id === dragState.id ? {
+      ...record,
+      x: parseFloat(sticker.style.left),
+      y: parseFloat(sticker.style.top),
+    } : record);
+    saveRecords(records);
+  }
+  dragState = null;
+}
+
+function resetCapturedPreview() {
+  currentCutout = "";
+  captureReady = false;
+  cutoutPreview.removeAttribute("src");
+  cutoutPreview.classList.remove("has-image");
+  smartBadge.hidden = true;
+  saveRecord.disabled = true;
+  cameraAction.textContent = "打开相机";
+}
+
+function toggleToolsPanel() {
+  activityToolPanel.classList.toggle("tools-open");
+}
+function openCapture() {
+  recordDate.value = selectedDate;
+  captureDialog.showModal();
+}
+
+function closeCapture() {
+  stopCamera();
+  resetCaptureForm();
+  captureDialog.close();
+}
+
+function resetCaptureForm() {
+  recordForm.reset();
+  recordDate.value = selectedDate;
+  currentOriginal = "";
+  currentCutout = "";
+  captureReady = false;
+  cutoutPreview.removeAttribute("src");
+  cutoutPreview.classList.remove("has-image");
+  smartBadge.hidden = true;
+  cameraAction.textContent = "打开相机";
+  fileInput.value = "";
+}
+async function processSelectedImage(dataUrl) {
+  currentOriginal = dataUrl;
+  currentCutout = "";
+  captureReady = false;
+  cutoutPreview.removeAttribute("src");
+  cutoutPreview.classList.remove("has-image");
+  smartBadge.hidden = true;
+  saveRecord.disabled = true;
+  cameraAction.disabled = true;
+
+  try {
+    currentCutout = (await makeCutout(currentOriginal)).image;
+    cutoutPreview.src = currentCutout;
+    cutoutPreview.classList.add("has-image");
+    captureReady = true;
+    cameraAction.textContent = "重拍";
+    stopCamera(false);
+    updateSmartKcal();
+  } catch (error) {
+    console.error(error);
+    alert("自动抠图失败，请换一张图片再试。");
+  } finally {
+    saveRecord.disabled = !currentCutout;
+    cameraAction.disabled = false;
+  }
+}
+function updateSmartKcal() {
+  const title = recordTitle.value.trim() || "未命名食物";
+  if (!recordKcal.value) recordKcal.value = estimateCalories(title);
+  smartBadge.textContent = `${recordKcal.value} kcal`;
+  smartBadge.hidden = false;
+}
+
+function openEdit(id) {
+  const record = loadRecords().find((item) => item.id === id);
+  if (!record) return;
+  document.querySelector("#editId").value = record.id;
+  document.querySelector("#editDate").value = record.date;
+  document.querySelector("#editTitle").value = record.title || "";
+  document.querySelector("#editKcal").value = record.kcal || 0;
+  document.querySelector("#editShop").value = record.shop || record.notes || "";
+  const preview = document.querySelector("#editPreview");
+  const image = recordImage(record);
+  if (image) {
+    preview.setAttribute("src", image);
+    preview.hidden = false;
+  } else {
+    preview.removeAttribute("src");
+    preview.hidden = true;
+  }
+  editDialog.showModal();
+}
+function clearTodayRecords() {
+  const count = recordsForDate(selectedDate).length;
+  if (!count) return;
+  if (!confirm(`确定删除 ${dateTitle(selectedDate)} 的 ${count} 条记录吗？`)) return;
+  saveRecords(loadRecords().filter((record) => record.date !== selectedDate));
+  renderAll();
+}
+
+function deleteEditingRecord() {
+  const id = document.querySelector("#editId").value;
+  if (!id) return;
+  if (!confirm("确定删除这条记录吗？")) return;
+  saveRecords(loadRecords().filter((record) => record.id !== id));
+  editDialog.close();
+  renderAll();
+}
+function deleteRecord(id) {
+  if (!confirm("确定删除这条活动记录吗？")) return;
+  saveRecords(loadRecords().filter((record) => record.id !== id));
+  renderAll();
 }
 
 function showHome() {
-  previousView = "home";
-  homeView.hidden = false;
-  studioView.hidden = true;
-  savedView.hidden = true;
+  homeScreen.hidden = false;
+  timelineScreen.hidden = true;
+  document.querySelector("#homeNav").classList.add("nav-active");
+  document.querySelector("#timelineNav").classList.remove("nav-active");
 }
 
-function showStudioOnly() {
-  previousView = "studio";
-  homeView.hidden = true;
-  studioView.hidden = false;
-  savedView.hidden = true;
+function showTimeline() {
+  homeScreen.hidden = true;
+  timelineScreen.hidden = false;
+  document.querySelector("#homeNav").classList.remove("nav-active");
+  document.querySelector("#timelineNav").classList.add("nav-active");
+  displayMonth = selectedDate.slice(0, 7);
+  renderAll();
 }
 
-function showSaved(from) {
-  previousView = from;
-  renderRecords();
-  homeView.hidden = true;
-  studioView.hidden = true;
-  savedView.hidden = false;
+function changeMonth(delta) {
+  const date = new Date(`${displayMonth}-01T00:00:00`);
+  date.setMonth(date.getMonth() + delta);
+  displayMonth = toDateInputValue(date).slice(0, 7);
+  selectedDate = `${displayMonth}-01`;
+  renderAll();
+}
+function changeDay(delta) {
+  const date = new Date(`${selectedDate}T00:00:00`);
+  date.setDate(date.getDate() + delta);
+  selectedDate = toDateInputValue(date);
+  recordDate.value = selectedDate;
+  renderAll();
 }
 
-function setImage(dataUrl, dateValue) {
-  currentOriginal = dataUrl;
-  currentCutout = "";
-  currentBadge = "";
-  originalPreview.src = dataUrl;
-  cutoutPreview.removeAttribute("src");
-  smartBadge.hidden = true;
-  recordDate.value = dateValue;
-  autoCutout.disabled = false;
+async function openCamera() {
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false });
+    camera.srcObject = cameraStream;
+    camera.classList.add("active");
+    cutoutPreview.classList.remove("has-image");
+    emptyState.hidden = true;
+    cameraAction.textContent = "拍照";
+  } catch (error) {
+    alert("无法打开相机，请检查权限，或改用上传照片。");
+  }
 }
 
-function resetCapture() {
-  recordForm.reset();
-  recordDate.value = today();
-  currentOriginal = "";
-  currentCutout = "";
-  currentBadge = "";
-  originalPreview.removeAttribute("src");
-  cutoutPreview.removeAttribute("src");
-  smartBadge.hidden = true;
-  autoCutout.disabled = true;
-  fileInput.value = "";
-  applyCategory(activeCategory);
+async function captureFromCamera() {
+  if (!camera.videoWidth) return;
+  canvas.width = camera.videoWidth;
+  canvas.height = camera.videoHeight;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(camera, 0, 0, canvas.width, canvas.height);
+  const dataUrl = canvas.toDataURL("image/jpeg", 0.86);
+  await processSelectedImage(await compressDataUrl(dataUrl, 1300, 0.84));
 }
 
-function stopCamera() {
+function stopCamera(resetLabel = true) {
   if (!cameraStream) return;
   cameraStream.getTracks().forEach((track) => track.stop());
   cameraStream = null;
   camera.srcObject = null;
   camera.classList.remove("active");
   emptyState.hidden = false;
-  takePhoto.disabled = true;
-  toggleCamera.textContent = "打开相机";
+  cameraAction.disabled = false;
+  if (resetLabel) cameraAction.textContent = "打开相机";
+}
+
+function toggleCalendarPanel() {
+  calendarPanel.hidden = !calendarPanel.hidden;
+  document.querySelector("#toggleCalendar").textContent = calendarPanel.hidden ? "日历" : "收起日历";
+}
+function updateBackground() {
+  currentBackground = backgroundPicker.value;
+  localStorage.setItem(backgroundKey, currentBackground);
+  applyBackground();
+  renderAll();
+}
+
+function applyBackground() {
+  document.documentElement.dataset.boardBg = currentBackground;
+}
+function loadRecords() {
+  return JSON.parse(localStorage.getItem(storeKey) || "[]");
+}
+
+function saveRecords(records) {
+  try {
+    localStorage.setItem(storeKey, JSON.stringify(records));
+  } catch (error) {
+    const compact = records.slice(0, 40).map((record) => ({ ...record, cutout: record.cutout || "" }));
+    localStorage.setItem(storeKey, JSON.stringify(compact));
+  }
+}
+
+function migrateRecords() {
+  if (localStorage.getItem(storeKey)) return;
+  for (const key of legacyKeys) {
+    const legacy = JSON.parse(localStorage.getItem(key) || "[]");
+    if (!legacy.length) continue;
+    const migrated = legacy.map((record, index) => {
+      const title = record.title || record.food || "未命名食物";
+      return {
+        id: record.id || crypto.randomUUID(),
+        date: record.date || today(),
+        title,
+        kcal: Number(record.kcal || String(record.badge || "").match(/\d+/)?.[0] || estimateCalories(title)),
+        notes: record.notes || record.extra || record.place || record.shop || "",
+        cutout: record.cutout || record.original || "",
+        createdAt: record.createdAt || new Date().toISOString(),
+        x: randomBetween(8, 68),
+        y: randomBetween(10, 66),
+        rotate: (index % 5 - 2) * 5,
+      };
+    });
+    saveRecords(migrated);
+    return;
+  }
+}
+
+function recordsForDate(date) {
+  return loadRecords()
+    .filter((record) => record.date === date)
+    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+}
+
+function totalKcal(records) {
+  return records.reduce((sum, record) => sum + Number(record.kcal || 0), 0);
+}
+
+function estimateCalories(title) {
+  const text = String(title || "");
+  const rules = [
+    [/香蕉/, 102], [/苹果|青苹果/, 78], [/面包|吐司|贝果|欧包/, 320], [/蛋糕|甜甜圈|奶油/, 430],
+    [/奶茶|拿铁|咖啡|冰乐|饮品/, 280], [/饭|面|粉|炒饭|盖浇/, 620], [/火锅|炸|烤肉|汉堡|披萨/, 780],
+    [/鸡|牛|羊|猪|鱼|虾|肉/, 520], [/沙拉|轻食|蔬菜/, 260], [/粥|汤|豆腐/, 220],
+  ];
+  const match = rules.find(([regex]) => regex.test(text));
+  return match ? match[1] : 360 + Math.floor(Math.random() * 120);
+}
+
+async function makeCutout(src) {
+  const image = await loadImage(src);
+  const maxSize = 1000;
+  const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+  const width = Math.round(image.width * scale);
+  const height = Math.round(image.height * scale);
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(image, 0, 0, width, height);
+  const imageData = ctx.getImageData(0, 0, width, height);
+  const data = imageData.data;
+  const guard = detectSubjectBounds(data, width, height);
+  const mask = traceConnectedBackground(data, width, height);
+  clearProtectedMask(mask, width, height, guard);
+  for (let i = 0; i < mask.length; i += 1) if (mask[i]) data[i * 4 + 3] = 0;
+  featherBackgroundEdge(data, mask, width, height);
+  ctx.putImageData(imageData, 0, 0);
+  const webp = canvas.toDataURL("image/webp", 0.86);
+  return { image: webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/png") };
+}
+
+function detectSubjectBounds(data, width, height) {
+  const samples = edgeSamples(data, width, height);
+  let minX = width, minY = height, maxX = 0, maxY = 0, count = 0;
+  const step = Math.max(3, Math.floor(Math.min(width, height) / 170));
+  for (let y = 0; y < height; y += step) {
+    for (let x = 0; x < width; x += step) {
+      const index = (y * width + x) * 4;
+      const center = distanceFromCenter(x, y, width, height);
+      const differs = samples.every((sample) => colorDistance(data, index, sample) > 35);
+      if (differs && center < .58) {
+        minX = Math.min(minX, x); minY = Math.min(minY, y); maxX = Math.max(maxX, x); maxY = Math.max(maxY, y); count += 1;
+      }
+    }
+  }
+  if (count < 80) return { cx: width / 2, cy: height / 2, rx: width * .44, ry: height * .44 };
+  const pad = Math.min(width, height) * .16;
+  return { cx: (minX + maxX) / 2, cy: (minY + maxY) / 2, rx: Math.max((maxX - minX) / 2 + pad, width * .38), ry: Math.max((maxY - minY) / 2 + pad, height * .36) };
+}
+
+function traceConnectedBackground(data, width, height) {
+  const total = width * height;
+  const mask = new Uint8Array(total);
+  const visited = new Uint8Array(total);
+  const queue = [];
+  const samples = edgeSamples(data, width, height);
+  const threshold = estimateBackgroundThreshold(samples);
+  const enqueue = (x, y) => {
+    if (x < 0 || y < 0 || x >= width || y >= height) return;
+    const point = y * width + x;
+    if (visited[point]) return;
+    visited[point] = 1;
+    const index = point * 4;
+    if (isBackgroundPixel(data, index, samples, threshold)) { mask[point] = 1; queue.push(point); }
+  };
+  for (let x = 0; x < width; x += 1) { enqueue(x, 0); enqueue(x, height - 1); }
+  for (let y = 1; y < height - 1; y += 1) { enqueue(0, y); enqueue(width - 1, y); }
+  for (let cursor = 0; cursor < queue.length; cursor += 1) {
+    const point = queue[cursor];
+    const x = point % width;
+    const y = Math.floor(point / width);
+    enqueue(x + 1, y); enqueue(x - 1, y); enqueue(x, y + 1); enqueue(x, y - 1);
+  }
+  if (mask.reduce((sum, value) => sum + value, 0) / total > .78) return new Uint8Array(total);
+  return mask;
+}
+
+function clearProtectedMask(mask, width, height, guard) {
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const dx = (x - guard.cx) / (guard.rx * .92);
+      const dy = (y - guard.cy) / (guard.ry * .92);
+      if (dx * dx + dy * dy <= 1) mask[y * width + x] = 0;
+    }
+  }
+}
+
+function featherBackgroundEdge(data, mask, width, height) {
+  for (let y = 1; y < height - 1; y += 1) {
+    for (let x = 1; x < width - 1; x += 1) {
+      const point = y * width + x;
+      if (mask[point]) continue;
+      const near = mask[point - 1] + mask[point + 1] + mask[point - width] + mask[point + width];
+      if (near) data[point * 4 + 3] = Math.max(100, Math.round(data[point * 4 + 3] * .88));
+    }
+  }
+}
+
+function edgeSamples(data, width, height) {
+  return [[.04,.04],[.5,.04],[.96,.04],[.04,.5],[.96,.5],[.04,.96],[.5,.96],[.96,.96]].map(([px, py]) => {
+    const x = Math.floor(width * px), y = Math.floor(height * py), index = (y * width + x) * 4;
+    return [data[index], data[index + 1], data[index + 2]];
+  });
+}
+
+function estimateBackgroundThreshold(samples) {
+  const center = samples.reduce((sum, sample) => [sum[0] + sample[0], sum[1] + sample[1], sum[2] + sample[2]], [0,0,0]).map((value) => value / samples.length);
+  const avg = samples.reduce((sum, sample) => sum + Math.sqrt((sample[0] - center[0]) ** 2 + (sample[1] - center[1]) ** 2 + (sample[2] - center[2]) ** 2), 0) / samples.length;
+  return Math.max(28, Math.min(56, 26 + avg * .3));
+}
+
+function isBackgroundPixel(data, index, samples, threshold) {
+  return samples.some((sample) => colorDistance(data, index, sample) <= threshold);
+}
+
+function colorDistance(data, index, sample) {
+  return Math.sqrt((data[index] - sample[0]) ** 2 + (data[index + 1] - sample[1]) ** 2 + (data[index + 2] - sample[2]) ** 2);
+}
+
+function distanceFromCenter(x, y, width, height) {
+  return Math.sqrt(((x - width / 2) / width) ** 2 + ((y - height / 2) / height) ** 2);
 }
 
 function readFile(file) {
@@ -389,7 +788,16 @@ function readFile(file) {
   });
 }
 
-async function compressDataUrl(src, maxSize = 1200, quality = 0.82) {
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
+}
+
+async function compressDataUrl(src, maxSize = 1200, quality = .82) {
   const image = await loadImage(src);
   const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
   const width = Math.max(1, Math.round(image.width * scale));
@@ -402,476 +810,222 @@ async function compressDataUrl(src, maxSize = 1200, quality = 0.82) {
   ctx.drawImage(image, 0, 0, width, height);
   return canvas.toDataURL("image/jpeg", quality);
 }
-function loadImage(src) {
-  return new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = reject;
-    image.src = src;
-  });
+
+async function exportTodayImage() {
+  const records = recordsForDate(selectedDate);
+  if (!records.length) {
+    alert("今天还没有活动贴纸，先拍照记录一张再保存。");
+    return;
+  }
+  const canvasOut = document.createElement("canvas");
+  canvasOut.width = 1080;
+  canvasOut.height = 1500;
+  const ctx = canvasOut.getContext("2d");
+  drawSceneBackground(ctx, canvasOut.width, canvasOut.height, dayBackground(records));
+  drawOrbit(ctx, canvasOut.width, canvasOut.height);
+  ctx.fillStyle = "rgba(255,255,255,.88)";
+  ctx.font = "900 58px Microsoft YaHei, sans-serif";
+  ctx.fillText(`${formatMonthDay(selectedDate)} 活动贴纸`, 70, 110);
+  ctx.font = "700 30px Microsoft YaHei, sans-serif";
+  ctx.fillText(`${records.length} 张贴纸 · ${totalKcal(records)} kcal`, 74, 158);
+  await drawRecordStickers(ctx, records, canvasOut.width, canvasOut.height, 140, 1280, 1.45);
+  downloadCanvas(canvasOut, `activity-${selectedDate}.png`);
 }
 
-async function makeCutout(src, categoryKey) {
-  const image = await loadImage(src);
-  const maxSize = 1000;
-  const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
-  const width = Math.round(image.width * scale);
-  const height = Math.round(image.height * scale);
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
-  ctx.drawImage(image, 0, 0, width, height);
-  const imageData = ctx.getImageData(0, 0, width, height);
-  const data = imageData.data;
-  const subjectGuard = getSubjectGuard(data, width, height, categoryKey);
-  const backgroundMask = traceConnectedBackground(data, width, height, subjectGuard);
-  clearProtectedMask(backgroundMask, width, height, subjectGuard);
-
-  for (let i = 0; i < backgroundMask.length; i += 1) {
-    if (backgroundMask[i]) data[i * 4 + 3] = 0;
+async function exportMonthImage() {
+  const monthRecords = loadRecords().filter((record) => record.date?.startsWith(displayMonth));
+  if (!monthRecords.length) {
+    alert("这个月还没有记录，无法保存月历图。");
+    return;
   }
-
-  featherBackgroundEdge(data, backgroundMask, width, height);
-  ctx.putImageData(imageData, 0, 0);
-  const webp = canvas.toDataURL("image/webp", 0.86);
-  return { image: webp.startsWith("data:image/webp") ? webp : canvas.toDataURL("image/png") };
+  const monthDate = new Date(`${displayMonth}-01T00:00:00`);
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const startDay = new Date(year, month, 1).getDay();
+  const canvasOut = document.createElement("canvas");
+  canvasOut.width = 1400;
+  canvasOut.height = 1700;
+  const ctx = canvasOut.getContext("2d");
+  drawPaperBackground(ctx, canvasOut.width, canvasOut.height);
+  ctx.fillStyle = "#3b2a24";
+  ctx.font = "900 76px Microsoft YaHei, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(`${year}年${month + 1}月`, canvasOut.width / 2, 120);
+  ctx.font = "700 30px Microsoft YaHei, sans-serif";
+  ctx.fillStyle = "#8b8178";
+  ctx.fillText(`${new Set(monthRecords.map((record) => record.date)).size} 天有记录 · ${monthRecords.length} 份活动`, canvasOut.width / 2, 168);
+  const weekdays = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"];
+  const left = 90, top = 250, gap = 18, cell = 160;
+  ctx.textAlign = "center";
+  ctx.font = "800 28px Microsoft YaHei, sans-serif";
+  ctx.fillStyle = "#8b8178";
+  weekdays.forEach((day, index) => ctx.fillText(day, left + index * (cell + gap) + cell / 2, top - 30));
+  for (let day = 1; day <= totalDays; day += 1) {
+    const index = startDay + day - 1;
+    const x = left + (index % 7) * (cell + gap);
+    const y = top + Math.floor(index / 7) * (cell + gap);
+    const date = `${displayMonth}-${String(day).padStart(2, "0")}`;
+    const records = recordsForDate(date);
+    await drawCalendarCell(ctx, x, y, cell, day, records);
+  }
+  downloadCanvas(canvasOut, `activity-month-${displayMonth}.png`);
 }
 
-function getSubjectGuard(data, width, height, categoryKey) {
-  if (categoryKey === "food") {
-    const detected = detectPlateBounds(data, width, height, edgeSamples(data, width, height));
-    return {
-      cx: detected.cx,
-      cy: detected.cy,
-      rx: Math.max(detected.rx, width * 0.43),
-      ry: Math.max(detected.ry, height * 0.4),
-    };
-  }
-  return defaultSubjectBounds(width, height, categoryKey);
+function drawPaperBackground(ctx, width, height) {
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, "#fff8ed");
+  gradient.addColorStop(.55, "#eef6ea");
+  gradient.addColorStop(1, "#fff2e7");
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = "rgba(255,255,255,.62)";
+  roundRect(ctx, 48, 205, width - 96, 1180, 54);
+  ctx.fill();
 }
 
-function clearProtectedMask(mask, width, height, guard) {
-  if (!guard) return;
-  for (let y = 0; y < height; y += 1) {
-    for (let x = 0; x < width; x += 1) {
-      if (isProtectedSubjectPoint(x, y, guard)) mask[y * width + x] = 0;
-    }
-  }
-}
-function traceConnectedBackground(data, width, height, subjectGuard) {
-  const total = width * height;
-  const mask = new Uint8Array(total);
-  const visited = new Uint8Array(total);
-  const queue = [];
-  const samples = collectBorderSamples(data, width, height);
-  const threshold = estimateBackgroundThreshold(samples);
-
-  function enqueue(x, y) {
-    if (x < 0 || y < 0 || x >= width || y >= height) return;
-    const point = y * width + x;
-    if (visited[point]) return;
-    visited[point] = 1;
-    const index = point * 4;
-    if (isBackgroundPixel(data, index, samples, threshold)) {
-      mask[point] = 1;
-      queue.push(point);
-    }
-  }
-
-  for (let x = 0; x < width; x += 1) {
-    enqueue(x, 0);
-    enqueue(x, height - 1);
-  }
-  for (let y = 1; y < height - 1; y += 1) {
-    enqueue(0, y);
-    enqueue(width - 1, y);
-  }
-
-  let cursor = 0;
-  while (cursor < queue.length) {
-    const point = queue[cursor];
-    cursor += 1;
-    const x = point % width;
-    const y = Math.floor(point / width);
-    visitNeighbor(x + 1, y);
-    visitNeighbor(x - 1, y);
-    visitNeighbor(x, y + 1);
-    visitNeighbor(x, y - 1);
-  }
-
-  const removedRatio = mask.reduce((sum, value) => sum + value, 0) / total;
-  if (removedRatio > 0.82) {
-    return traceConnectedBackgroundConservative(data, width, height, samples, subjectGuard);
-  }
-
-  function visitNeighbor(x, y) {
-    if (x < 0 || y < 0 || x >= width || y >= height) return;
-    const point = y * width + x;
-    if (visited[point]) return;
-    visited[point] = 1;
-    const index = point * 4;
-    if (isBackgroundPixel(data, index, samples, threshold)) {
-      mask[point] = 1;
-      queue.push(point);
-    }
-  }
-
-  return mask;
-}
-
-function traceConnectedBackgroundConservative(data, width, height, samples, subjectGuard) {
-  const total = width * height;
-  const mask = new Uint8Array(total);
-  const visited = new Uint8Array(total);
-  const queue = [];
-  const threshold = 30;
-
-  function enqueue(x, y) {
-    const point = y * width + x;
-    if (visited[point]) return;
-    visited[point] = 1;
-    const index = point * 4;
-    if (isBackgroundPixel(data, index, samples, threshold)) {
-      mask[point] = 1;
-      queue.push(point);
-    }
-  }
-
-  for (let x = 0; x < width; x += 1) {
-    enqueue(x, 0);
-    enqueue(x, height - 1);
-  }
-  for (let y = 1; y < height - 1; y += 1) {
-    enqueue(0, y);
-    enqueue(width - 1, y);
-  }
-
-  let cursor = 0;
-  while (cursor < queue.length) {
-    const point = queue[cursor];
-    cursor += 1;
-    const x = point % width;
-    const y = Math.floor(point / width);
-    for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
-      if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue;
-      const nextPoint = ny * width + nx;
-      if (visited[nextPoint]) continue;
-      visited[nextPoint] = 1;
-      const index = nextPoint * 4;
-      if (isBackgroundPixel(data, index, samples, threshold)) {
-        mask[nextPoint] = 1;
-        queue.push(nextPoint);
-      }
-    }
-  }
-
-  return mask;
-}
-function isProtectedSubjectPoint(x, y, guard) {
-  if (!guard) return false;
-  const dx = (x - guard.cx) / (guard.rx * 0.92);
-  const dy = (y - guard.cy) / (guard.ry * 0.92);
-  return dx * dx + dy * dy <= 1;
-}
-function collectBorderSamples(data, width, height) {
-  const samples = [];
-  const step = Math.max(4, Math.floor(Math.min(width, height) / 80));
-  for (let x = 0; x < width; x += step) {
-    pushSample(x, 0);
-    pushSample(x, height - 1);
-  }
-  for (let y = 0; y < height; y += step) {
-    pushSample(0, y);
-    pushSample(width - 1, y);
-  }
-
-  function pushSample(x, y) {
-    const index = (y * width + x) * 4;
-    samples.push([data[index], data[index + 1], data[index + 2]]);
-  }
-
-  return samples;
-}
-
-function estimateBackgroundThreshold(samples) {
-  if (samples.length < 2) return 48;
-  const center = samples.reduce(
-    (sum, sample) => [sum[0] + sample[0], sum[1] + sample[1], sum[2] + sample[2]],
-    [0, 0, 0],
-  ).map((value) => value / samples.length);
-  const averageDistance = samples.reduce((sum, sample) => {
-    const dr = sample[0] - center[0];
-    const dg = sample[1] - center[1];
-    const db = sample[2] - center[2];
-    return sum + Math.sqrt(dr * dr + dg * dg + db * db);
-  }, 0) / samples.length;
-  return Math.max(28, Math.min(54, 26 + averageDistance * 0.28));
-}
-
-function isBackgroundPixel(data, index, samples, threshold) {
-  let nearest = Infinity;
-  for (const sample of samples) {
-    nearest = Math.min(nearest, colorDistance(data, index, sample));
-    if (nearest <= threshold) return true;
-  }
-  return false;
-}
-
-function isLowDetailPixel(data, x, y, width, height) {
-  if (x <= 0 || y <= 0 || x >= width - 1 || y >= height - 1) return true;
-  const index = (y * width + x) * 4;
-  const right = (y * width + x + 1) * 4;
-  const down = ((y + 1) * width + x) * 4;
-  const horizontal = colorDistance(data, index, [data[right], data[right + 1], data[right + 2]]);
-  const vertical = colorDistance(data, index, [data[down], data[down + 1], data[down + 2]]);
-  return horizontal + vertical < 42;
-}
-
-function featherBackgroundEdge(data, mask, width, height) {
-  const originalAlpha = new Uint8ClampedArray(width * height);
-  for (let i = 0; i < originalAlpha.length; i += 1) originalAlpha[i] = data[i * 4 + 3];
-
-  for (let y = 1; y < height - 1; y += 1) {
-    for (let x = 1; x < width - 1; x += 1) {
-      const point = y * width + x;
-      if (mask[point]) continue;
-      const nearBackground =
-        mask[point - 1] + mask[point + 1] + mask[point - width] + mask[point + width] +
-        mask[point - width - 1] + mask[point - width + 1] + mask[point + width - 1] + mask[point + width + 1];
-      if (nearBackground > 0) {
-        data[point * 4 + 3] = Math.max(80, Math.round(originalAlpha[point] * (1 - nearBackground * 0.055)));
-      }
-    }
-  }
-}
-function defaultSubjectBounds(width, height, categoryKey) {
-  const presets = {
-    tea: { rx: 0.43, ry: 0.49, cy: 0.52 },
-    person: { rx: 0.42, ry: 0.5, cy: 0.5 },
-    life: { rx: 0.43, ry: 0.43, cy: 0.52 },
+function drawSceneBackground(ctx, width, height, bg) {
+  const palettes = {
+    garden: ["#fff8ec", "#edf3df", "#ffc078"],
+    cream: ["#fff3d8", "#f3dec2", "#fff8ea"],
+    night: ["#151817", "#17313a", "#ffdd84"],
+    mint: ["#e9fff0", "#d9f4ee", "#ffe6a7"],
   };
-  const preset = presets[categoryKey] || { rx: 0.4, ry: 0.42, cy: 0.5 };
-  return { cx: width / 2, cy: height * preset.cy, rx: width * preset.rx, ry: height * preset.ry };
+  const colors = palettes[bg] || palettes.garden;
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, colors[0]);
+  gradient.addColorStop(.58, colors[1]);
+  gradient.addColorStop(1, colors[2]);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = bg === "night" ? "rgba(0,0,0,.36)" : "rgba(255,255,255,.18)";
+  ctx.fillRect(0, 0, width, height);
 }
 
-function detectPlateBounds(data, width, height, samples) {
-  let minX = width;
-  let minY = height;
-  let maxX = 0;
-  let maxY = 0;
-  let count = 0;
-  const step = Math.max(3, Math.floor(Math.min(width, height) / 180));
-
-  for (let y = 0; y < height; y += step) {
-    for (let x = 0; x < width; x += step) {
-      const index = (y * width + x) * 4;
-      const centerBias = distanceFromCenter(x, y, width, height);
-      const differsFromBackground = samples.every((sample) => colorDistance(data, index, sample) > 38);
-      if (differsFromBackground && centerBias < 0.55) {
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
-        count += 1;
-      }
-    }
+function drawOrbit(ctx, width, height) {
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,.66)";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(width / 2, height / 2 + 40, 220, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,.82)";
+  for (let i = 0; i < 8; i += 1) {
+    const angle = (Math.PI * 2 / 8) * i;
+    ctx.beginPath();
+    ctx.ellipse(width / 2 + Math.cos(angle) * 220, height / 2 + 40 + Math.sin(angle) * 220, 18, 7, angle, 0, Math.PI * 2);
+    ctx.fill();
   }
-
-  if (count < 80) return { cx: width / 2, cy: height / 2, rx: width * 0.43, ry: height * 0.43 };
-  const pad = Math.min(width, height) * 0.13;
-  return {
-    cx: (minX + maxX) / 2,
-    cy: (minY + maxY) / 2,
-    rx: Math.min(width * 0.49, Math.max((maxX - minX) / 2 + pad, width * 0.28)),
-    ry: Math.min(height * 0.49, Math.max((maxY - minY) / 2 + pad, height * 0.28)),
-  };
+  ctx.restore();
 }
 
-function defaultTitle(categoryKey) {
-  const names = {
-    food: "未命名美食",
-    tea: "未命名奶茶",
-    person: "未命名人物",
-    life: "未命名小物",
-  };
-  return names[categoryKey] || "未命名记录";
-}
-function createBadge(categoryKey, title) {
-  if (categoryKey === "food") return `${estimateCalories(title)} kcal`;
-  if (categoryKey === "tea") return pick(["三分糖", "少冰", "今日续命", "清爽杯", "甜度刚好"]);
-  if (categoryKey === "person") return pick(["松弛感", "今日穿搭", "氛围感", "好状态", "出片"]);
-  return pick(["新收藏", "可爱小物", "灵感+1", "值得留下", "心动"]);
+async function drawRecordStickers(ctx, records, width, height, minY, maxY, scale = 1) {
+  for (let index = 0; index < records.length; index += 1) {
+    const record = records[index];
+    const fallback = nextStickerPlacement(index);
+    const x = (record.x ?? fallback.x) / 100 * width;
+    const y = minY + (record.y ?? fallback.y) / 100 * (maxY - minY);
+    const image = await loadImage(recordImage(record));
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(((record.rotate ?? fallback.rotate) * Math.PI) / 180);
+    const size = 118 * scale;
+    ctx.fillStyle = "rgba(255,255,255,.9)";
+    roundRect(ctx, -size / 2 - 10, -size / 2 - 8, size + 20, size + 20, 28);
+    ctx.fill();
+    ctx.drawImage(image, -size / 2, -size / 2, size, size);
+    ctx.fillStyle = "rgba(255,255,255,.92)";
+    roundRect(ctx, -58 * scale, size / 2 - 2, 116 * scale, 34 * scale, 18 * scale);
+    ctx.fill();
+    ctx.fillStyle = "#3b2a24";
+    ctx.font = `${Math.round(18 * scale)}px Microsoft YaHei, sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(record.title, 0, size / 2 + 22 * scale);
+    ctx.restore();
+  }
 }
 
-function estimateCalories(title) {
-  const text = String(title || "");
-  const rules = [
-    [/炸|薯|汉堡|披萨|烤肉|火锅/, 760],
-    [/饭|面|粉|拉面|盖浇|炒饭/, 620],
-    [/牛|羊|鸡|肉|排骨|鱼/, 520],
-    [/沙拉|轻食|蔬菜|水果/, 280],
-    [/甜品|蛋糕|冰淇淋|奶油/, 430],
-    [/粥|汤|豆腐/, 260],
+async function drawCalendarCell(ctx, x, y, size, day, records) {
+  ctx.save();
+  ctx.translate(x, y);
+  roundRect(ctx, 0, 0, size, size, 28);
+  ctx.clip();
+  drawSceneBackground(ctx, size, size, dayBackground(records));
+  ctx.fillStyle = "rgba(255,255,255,.76)";
+  roundRect(ctx, 10, 10, 38, 34, 17);
+  ctx.fill();
+  ctx.fillStyle = "#53473f";
+  ctx.font = "800 22px Microsoft YaHei, sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(String(day), 29, 34);
+  for (let index = 0; index < records.slice(0, 4).length; index += 1) {
+    await drawCalendarSticker(ctx, size, records[index], index);
+  }
+  ctx.restore();
+}
+
+async function drawCalendarSticker(ctx, size, record, index) {
+  const image = await loadImage(recordImage(record));
+  const fallback = nextStickerPlacement(index);
+  const sx = ((record.x ?? fallback.x) / 100) * size;
+  const sy = ((record.y ?? fallback.y) / 100) * size;
+  ctx.save();
+  ctx.translate(sx, sy);
+  ctx.rotate(((record.rotate ?? fallback.rotate) * Math.PI) / 180);
+  ctx.fillStyle = "rgba(255,255,255,.86)";
+  roundRect(ctx, -29, -27, 58, 58, 16);
+  ctx.fill();
+  ctx.drawImage(image, -24, -24, 48, 48);
+  ctx.restore();
+}
+
+function roundRect(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + width, y, x + width, y + height, radius);
+  ctx.arcTo(x + width, y + height, x, y + height, radius);
+  ctx.arcTo(x, y + height, x, y, radius);
+  ctx.arcTo(x, y, x + width, y, radius);
+  ctx.closePath();
+}
+
+function downloadCanvas(canvasOut, filename) {
+  const link = document.createElement("a");
+  link.href = canvasOut.toDataURL("image/png");
+  link.download = filename;
+  link.click();
+}
+function bind(selector, event, handler) { document.querySelector(selector).addEventListener(event, handler); }
+function today() { return toDateInputValue(new Date()); }
+function toDateInputValue(date) { return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
+function dateTitle(dateValue) { const d = new Date(`${dateValue}T00:00:00`); return `${d.getMonth() + 1}月${d.getDate()}日`; }
+function formatMonthDay(dateValue) { const d = new Date(`${dateValue}T00:00:00`); return `${d.getMonth() + 1}月${d.getDate()}日`; }
+function timeText(value) { const d = value ? new Date(value) : new Date(); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; }
+function weekDates(dateValue) { const d = new Date(`${dateValue}T00:00:00`); const day = d.getDay() || 7; d.setDate(d.getDate() - day + 1); return Array.from({ length: 7 }, (_, i) => { const next = new Date(d); next.setDate(d.getDate() + i); return next; }); }
+function weekday(date) { return ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][date.getDay()]; }
+function nextStickerPlacement(index) {
+  const spots = [
+    { x: 12, y: 10, rotate: -10 },
+    { x: 58, y: 12, rotate: 8 },
+    { x: 36, y: 34, rotate: -4 },
+    { x: 68, y: 48, rotate: 10 },
+    { x: 12, y: 56, rotate: -8 },
+    { x: 42, y: 66, rotate: 6 },
+    { x: 72, y: 18, rotate: -6 },
+    { x: 22, y: 34, rotate: 7 },
   ];
-  const match = rules.find(([regex]) => regex.test(text));
-  const base = match ? match[1] : 480;
-  return base + Math.floor(Math.random() * 61) - 30;
+  const base = spots[index % spots.length];
+  const round = Math.floor(index / spots.length);
+  return {
+    x: clamp(base.x + round * 3, 4, 76),
+    y: clamp(base.y + round * 4, 4, 76),
+    rotate: base.rotate,
+  };
 }
-
-function pick(items) {
-  return items[Math.floor(Math.random() * items.length)];
-}
-
-function edgeSamples(data, width, height) {
-  return [
-    [0.04, 0.04], [0.5, 0.04], [0.96, 0.04], [0.04, 0.5],
-    [0.96, 0.5], [0.04, 0.96], [0.5, 0.96], [0.96, 0.96],
-  ].map(([px, py]) => {
-    const x = Math.floor(width * px);
-    const y = Math.floor(height * py);
-    const index = (y * width + x) * 4;
-    return [data[index], data[index + 1], data[index + 2]];
-  });
-}
-
-function colorDistance(data, index, sample) {
-  const dr = data[index] - sample[0];
-  const dg = data[index + 1] - sample[1];
-  const db = data[index + 2] - sample[2];
-  return Math.sqrt(dr * dr + dg * dg + db * db);
-}
-
-function distanceFromCenter(x, y, width, height) {
-  const dx = (x - width / 2) / width;
-  const dy = (y - height / 2) / height;
-  return Math.sqrt(dx * dx + dy * dy);
-}
-
-function pointInEllipse(x, y, ellipse) {
-  const dx = (x - ellipse.cx) / ellipse.rx;
-  const dy = (y - ellipse.cy) / ellipse.ry;
-  return dx * dx + dy * dy <= 1;
-}
-
-function ellipseFade(x, y, ellipse) {
-  const dx = (x - ellipse.cx) / ellipse.rx;
-  const dy = (y - ellipse.cy) / ellipse.ry;
-  const distance = Math.sqrt(dx * dx + dy * dy);
-  if (distance < 0.9) return 1;
-  return Math.max(0, 1 - (distance - 0.9) / 0.1);
-}
-
-function softenAlpha(data, width, height) {
-  const alpha = new Uint8ClampedArray(width * height);
-  for (let i = 0; i < alpha.length; i += 1) alpha[i] = data[i * 4 + 3];
-  for (let y = 1; y < height - 1; y += 1) {
-    for (let x = 1; x < width - 1; x += 1) {
-      const i = y * width + x;
-      const avg = (alpha[i] + alpha[i - 1] + alpha[i + 1] + alpha[i - width] + alpha[i + width]) / 5;
-      data[i * 4 + 3] = avg;
-    }
-  }
-}
-
-function loadRecords() {
-  const current = JSON.parse(localStorage.getItem(storeKey) || "[]");
-  if (current.length) return current;
-
-  const legacy = JSON.parse(localStorage.getItem("food-cutout-records-v1") || "[]");
-  if (!legacy.length) return [];
-
-  const migrated = legacy.map((record) => ({
-    id: record.id || crypto.randomUUID(),
-    category: "food",
-    date: record.date,
-    title: record.food || "未命名美食",
-    place: record.shop || "",
-    extra: record.notes || "",
-    notes: record.notes || "",
-    badge: record.badge || `${estimateCalories(record.food)} kcal`,
-    original: record.original,
-    cutout: record.cutout || record.original,
-    createdAt: record.createdAt || new Date().toISOString(),
-  }));
-  localStorage.setItem(storeKey, JSON.stringify(migrated));
-  return migrated;
-}
-
-function saveRecords(records) {
-  try {
-    localStorage.setItem(storeKey, JSON.stringify(records));
-  } catch (error) {
-    const compactRecords = records.map((record, index) => ({
-      ...record,
-      original: "",
-      cutout: index === 0 ? record.cutout : "",
-    }));
-    localStorage.setItem(storeKey, JSON.stringify(compactRecords));
-  }
-}
-
-function renderRecords() {
-  const records = loadRecords();
-  savedRecordsEl.innerHTML = records.length ? records.map(recordTemplate).join("") : '<p class="record-text">还没有保存记录。</p>';
-}
-
-function recordTemplate(record) {
-  const category = categories[record.category] || categories.food;
-  return `
-    <article class="record-card">
-      <div class="record-image-wrap">
-        <img src="${escapeAttr(record.cutout || record.original)}" alt="${escapeAttr(record.title)}" />
-        <span class="record-badge">${escapeHtml(record.badge || "已记录")}</span>
-      </div>
-      <div class="record-body">
-        <div class="record-meta">
-          <span>${escapeHtml(category.icon)} ${escapeHtml(category.name)}</span>
-          <time>${escapeHtml(record.date)}</time>
-        </div>
-        <strong class="record-title">${escapeHtml(record.title)}</strong>
-        <p class="record-text">${escapeHtml(record.place || "未填写来源")}</p>
-        <p class="record-text">${escapeHtml(record.extra || record.notes || "无备注")}</p>
-        <div class="record-actions">
-          <button type="button" data-action="edit" data-id="${record.id}">编辑</button>
-          <button type="button" data-action="delete" data-id="${record.id}">删除</button>
-        </div>
-      </div>
-    </article>`;
-}
-
-function today() {
-  return toDateInputValue(new Date());
-}
-
-function toDateInputValue(date) {
-  const timezoneOffset = date.getTimezoneOffset() * 60000;
-  return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 10);
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function escapeAttr(value) {
-  return escapeHtml(value).replaceAll("`", "&#096;");
-}
-
-
-
-
-
-
-
-
-
-
-
-
+function randomBetween(min, max) { return Math.round((Math.random() * (max - min) + min) * 10) / 10; }
+function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
+function escapeAttr(value) { return escapeHtml(value).replaceAll("`", "&#096;"); }
 
 
 

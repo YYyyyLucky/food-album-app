@@ -1,0 +1,17 @@
+{
+  "name": "今日贴贴",
+  "short_name": "今日贴贴",
+  "description": "把今天拍到的东西抠成贴纸，贴进每日活动墙。",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fff8ec",
+  "theme_color": "#176653",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

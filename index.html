@@ -1,155 +1,202 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>灵感相册</title>
-    <link rel="stylesheet" href="./styles.css?v=20260704-guardcut2" />
+    <title>今日贴贴</title>
+    <meta name="theme-color" content="#176653" />
+    <link rel="manifest" href="./manifest.json" />
+    <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icon.svg" />
+    <link rel="stylesheet" href="./styles.css?v=20260705-share1" />
   </head>
   <body>
-    <main class="app-shell" data-view="home">
-      <section class="home-view" id="homeView">
-        <header class="home-hero">
+    <main class="phone-shell">
+      <section class="screen home-screen" id="homeScreen">
+        <header class="day-header">
           <div>
-            <p class="eyebrow">Capture Diary</p>
-            <h1>灵感相册</h1>
-            <p class="hero-copy">把美食、奶茶、人物和生活里的小瞬间拍下来，自动抠图，再变成一张张漂亮记录卡。</p>
+            <div class="date-line">
+              <button id="prevDay" class="plain-button" type="button" aria-label="前一天">‹</button>
+              <h1 id="currentDateTitle">今天</h1>
+              <button id="nextDay" class="plain-button" type="button" aria-label="后一天">›</button>
+              <strong id="recordCount">0</strong>
+            </div>
+            <p>可自由拖动今日活动贴纸，自动保存为实况。</p>
           </div>
-          <button id="openSavedFromHome" type="button" class="ghost-button">保存记录</button>
+          <button id="installHelp" class="soft-button" type="button">安装到桌面</button>
         </header>
 
-        <section class="category-grid" id="categoryGrid" aria-label="分类入口"></section>
+        <section class="install-card" aria-label="分享和备份提示">
+          <div>
+            <strong>今日贴贴</strong>
+            <span>发给朋友后，每个人的贴纸都会保存在自己的手机里。</span>
+          </div>
+          <button id="exportBackupHome" class="soft-button" type="button">备份</button>
+        </section>
+
+        <section class="widget-board" id="widgetBoard" aria-label="今日活动贴纸">
+          <div class="board-bg"></div>
+          <div id="stickerLayer" class="sticker-layer"></div>
+          <div id="emptyBoard" class="empty-board" hidden></div>
+        </section>
+
+        <section class="today-summary">
+          <div>
+            <span id="todayKcal">0 kcal</span>
+            <small>今日摄入</small>
+          </div>
+          <div>
+            <span id="todayItems">0</span>
+            <small>条记录</small>
+          </div>
+          <button id="openTimeline" type="button">今日活动动态</button>
+          <button id="clearToday" class="soft-button" type="button">清空今日</button>
+        </section>
       </section>
 
-      <section class="studio-view" id="studioView" hidden>
-        <header class="studio-header">
-          <button id="backHome" type="button" class="ghost-button">返回首页</button>
+      <section class="screen timeline-screen" id="timelineScreen" hidden>
+        <header class="timeline-header activity-header">
+          <button id="backHome" class="plain-button" type="button">‹</button>
           <div>
-            <p class="eyebrow" id="studioKicker">美食</p>
-            <h2 id="studioTitle">今天吃了什么</h2>
-            <p id="studioCopy">拍照或上传菜品，自动保留整盘菜并生成卡路里角标。</p>
+            <h2 id="activityTitle">今日活动动态</h2>
+            <p id="activitySubtitle">当天的饮食贴纸墙和记录会显示在这里。</p>
           </div>
-          <button id="openSavedFromStudio" type="button">保存记录</button>
-        </header>
-
-        <div class="studio-layout">
-          <section class="capture-card">
-            <div class="camera-stage">
-              <video id="camera" autoplay playsinline muted></video>
-              <canvas id="captureCanvas" hidden></canvas>
-              <div class="empty-state" id="emptyState">
-                <strong id="emptyTitle">拍照或上传图片</strong>
-                <span id="emptyHint">让主体在画面中央，抠图会更稳定。</span>
-              </div>
-            </div>
-
-            <div class="toolbar">
-              <button id="toggleCamera" type="button">打开相机</button>
-              <button id="takePhoto" type="button" disabled>拍照</button>
-              <label class="file-button">
-                上传照片
-                <input id="fileInput" type="file" accept="image/*" capture="environment" />
+          <div class="activity-tools">
+            <button id="toggleTools" class="more-button" type="button">更多</button>
+            <div id="activityToolPanel" class="activity-tool-panel">
+              <label class="background-picker">
+                <span>组件背景</span>
+                <select id="backgroundPicker">
+                  <option value="garden">花园</option>
+                  <option value="cream">奶油</option>
+                  <option value="night">夜光</option>
+                  <option value="mint">薄荷</option>
+                </select>
               </label>
-              <button id="autoCutout" type="button" disabled>自动抠图</button>
+              <button id="toggleCalendar" class="calendar-button" type="button">日历</button>
+              <button id="exportToday" class="soft-button" type="button">保存今日图</button>
+              <button id="exportMonth" class="soft-button" type="button">保存月历图</button>
+              <button id="exportBackup" class="soft-button" type="button">导出备份</button>
+              <label class="soft-button import-button">导入备份<input id="importBackup" type="file" accept="application/json,.json" /></label>
             </div>
-
-            <section class="preview-grid" aria-label="图片预览">
-              <figure>
-                <figcaption>原图</figcaption>
-                <img id="originalPreview" alt="原图预览" />
-              </figure>
-              <figure class="result-figure">
-                <figcaption id="resultCaption">抠图结果</figcaption>
-                <img id="cutoutPreview" alt="抠图预览" />
-                <span class="badge" id="smartBadge" hidden></span>
-              </figure>
-            </section>
-          </section>
-
-          <aside class="editor-card">
-            <form id="recordForm">
-              <div class="field-row">
-                <label for="recordDate">记录日期</label>
-                <input id="recordDate" name="recordDate" type="date" required />
-              </div>
-              <div class="field-row">
-                <label for="recordTitle">名称</label>
-                <input id="recordTitle" name="recordTitle" type="text" />
-              </div>
-              <div class="field-row dynamic-field" id="placeField">
-                <label for="recordPlace" id="placeLabel">来自哪家店</label>
-                <input id="recordPlace" name="recordPlace" type="text" />
-              </div>
-              <div class="field-row dynamic-field" id="extraField">
-                <label for="recordExtra" id="extraLabel">小记录</label>
-                <input id="recordExtra" name="recordExtra" type="text" />
-              </div>
-              <div class="field-row">
-                <label for="recordNotes">备注</label>
-                <textarea id="recordNotes" name="recordNotes" rows="4"></textarea>
-              </div>
-              <div class="form-actions">
-                <button type="submit">保存这张</button>
-                <button id="clearForm" type="button" class="ghost-button">清空</button>
-              </div>
-            </form>
-          </aside>
-        </div>
-      </section>
-
-      <section class="saved-view" id="savedView" hidden>
-        <header class="saved-header">
-          <div>
-            <p class="eyebrow">Saved</p>
-            <h2>保存的信息</h2>
-            <p>所有分类的记录都会放在这里，可以编辑、删除和导出。</p>
-          </div>
-          <div class="saved-actions">
-            <button id="exportJson" type="button" class="ghost-button">导出</button>
-            <button id="backFromSaved" type="button">返回</button>
           </div>
         </header>
-        <div id="savedRecords" class="records"></div>
+
+        <section id="calendarPanel" class="calendar-panel" hidden>
+          <header class="calendar-panel-head">
+            <div>
+              <h2 id="monthTitle">本月</h2>
+              <p id="monthSubtitle">按月查看每天的饮食贴纸墙。</p>
+            </div>
+            <div class="month-actions">
+              <button id="prevMonth" class="soft-button" type="button">上月</button>
+              <button id="nextMonth" class="soft-button" type="button">下月</button>
+            </div>
+          </header>
+          <section class="month-calendar-card">
+            <div class="month-weekdays">
+              <span>周日</span><span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span>
+            </div>
+            <div id="monthGrid" class="month-grid"></div>
+          </section>
+          <section class="month-summary-card">
+            <div>
+              <small>本月</small>
+              <strong id="monthCupCount">0</strong><span>杯/份</span>
+              <em id="monthShopCount">0 天有记录</em>
+            </div>
+            <div id="monthStickerStrip" class="month-sticker-strip"></div>
+          </section>
+        </section>
+
+        <div id="activityDateStrip" class="activity-date-strip"></div>
+        <section class="daily-wall-card">
+          <div class="daily-wall-bg"></div>
+          <div id="dailyWall" class="daily-wall"></div>
+        </section>
+        <div id="timelineList" class="timeline-list"></div>
       </section>
+
+      <nav class="bottom-nav">
+        <button id="homeNav" type="button" class="nav-active">今日</button>
+        <button id="openCapture" type="button" class="camera-fab">拍照记录</button>
+        <button id="timelineNav" type="button">动态</button>
+      </nav>
     </main>
 
-    <dialog id="editDialog">
-      <form method="dialog" id="editForm">
-        <h2>编辑记录</h2>
-        <input id="editId" type="hidden" />
-        <label>
-          记录日期
-          <input id="editDate" type="date" required />
-        </label>
-        <label>
-          名称
-          <input id="editTitle" type="text" />
-        </label>
-        <label>
-          地点/来源
-          <input id="editPlace" type="text" />
-        </label>
-        <label>
-          小记录
-          <input id="editExtra" type="text" />
-        </label>
-        <label>
-          备注
-          <textarea id="editNotes" rows="4"></textarea>
-        </label>
-        <menu>
-          <button value="cancel" type="button" id="cancelEdit" class="ghost-button">取消</button>
-          <button value="default" type="submit">保存</button>
+    <dialog id="captureDialog" class="capture-dialog">
+      <form id="recordForm" method="dialog">
+        <header class="dialog-header">
+          <div>
+            <h2>记录一口</h2>
+            <p>拍照或上传后自动抠图，只保留处理后的活动贴纸。</p>
+          </div>
+          <button id="closeCapture" class="plain-button" type="button">×</button>
+        </header>
+
+        <div class="capture-preview-shell merged-capture-shell">
+          <div class="camera-stage merged-stage">
+            <video id="camera" autoplay playsinline muted></video>
+            <canvas id="captureCanvas" hidden></canvas>
+            <img id="cutoutPreview" class="stage-cutout" alt="抠图预览" />
+            <span id="smartBadge" class="kcal-badge" hidden></span>
+            <div class="empty-state" id="emptyState"></div>
+          </div>
+        </div>
+
+        <div class="form-grid compact-form-grid">
+          <label>
+            日期
+            <input id="recordDate" name="recordDate" type="date" required />
+          </label>
+          <label>
+            名称
+            <input id="recordTitle" name="recordTitle" type="text" placeholder="例如：奶茶、手办、小猫、拿铁" />
+          </label>
+          <label>
+            店名
+            <input id="recordShop" name="recordShop" type="text" placeholder="例如：某某小馆、便利店、家里" />
+          </label>
+          <label>
+            热量
+            <input id="recordKcal" name="recordKcal" type="number" min="0" step="1" placeholder="自动估算，可修改" />
+          </label>
+        </div>
+
+        <menu class="capture-bottom-bar">
+          <button id="cameraAction" type="button">打开相机</button>
+          <label class="file-button">
+            上传照片
+            <input id="fileInput" type="file" accept="image/*" capture="environment" />
+          </label>
+          <button id="clearForm" class="soft-button" type="button">清空</button>
+          <button id="saveRecord" type="submit" disabled>加入今日</button>
         </menu>
       </form>
     </dialog>
 
-    <script src="./app.js?v=20260704-guardcut2"></script>
+    <dialog id="editDialog" class="edit-dialog detail-dialog">
+      <form id="editForm" class="detail-form" method="dialog">
+        <input id="editId" type="hidden" />
+        <figure class="detail-hero">
+          <img id="editPreview" alt="记录图片" />
+        </figure>
+        <section class="detail-fields">
+          <label>日期<input id="editDate" type="date" required /></label>
+          <label>名称<input id="editTitle" type="text" placeholder="可以不填" /></label>
+          <label>店名<input id="editShop" type="text" placeholder="可以不填" /></label>
+          <label>热量<input id="editKcal" type="number" min="0" step="1" /></label>
+        </section>
+        <menu class="detail-actions">
+          <button id="deleteEdit" class="delete-icon" type="button" aria-label="删除">×</button>
+          <button class="save-icon" type="submit" aria-label="保存">✓</button>
+        </menu>
+      </form>
+    </dialog>
+
+    <script src="./app.js?v=20260705-share1"></script>
   </body>
 </html>
-<!-- redeploy -->
-
-
 
 
 

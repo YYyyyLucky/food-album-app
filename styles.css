@@ -3134,3 +3134,85 @@ html[data-board-bg="night"] .daily-wall-sticker span {
     width: min(92vw, 460px) !important;
   }
 }
+
+/* Keep home, activity wall, and calendar wall visually synchronized */
+.daily-wall-sticker {
+  width: var(--item-size, 100px) !important;
+  min-height: var(--item-size, 100px) !important;
+}
+
+.daily-wall-sticker .daily-wall-sticker-wrap {
+  width: var(--item-size, 100px) !important;
+  height: var(--item-size, 100px) !important;
+}
+
+.daily-wall-sticker .daily-wall-sticker-wrap img,
+.daily-wall-sticker .builtin-sticker-symbol {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.month-day-scene {
+  overflow: hidden !important;
+}
+
+.month-scene-stickers {
+  position: absolute !important;
+  inset: 0 !important;
+  overflow: hidden !important;
+}
+
+.calendar-sticker {
+  position: absolute !important;
+  width: calc(var(--item-size, 100px) * .32) !important;
+  height: calc(var(--item-size, 100px) * .32) !important;
+  min-height: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  translate: -50% -50%;
+  transform-origin: center center !important;
+  z-index: 4;
+}
+
+.calendar-sticker .calendar-sticker-wrap {
+  width: 100% !important;
+  height: 100% !important;
+  display: grid !important;
+  place-items: center !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  padding: 0 !important;
+}
+
+.calendar-sticker .calendar-sticker-wrap img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: drop-shadow(0 3px 5px rgba(50,32,18,.18)) !important;
+}
+
+.calendar-sticker .builtin-sticker-symbol {
+  width: 100% !important;
+  height: 100% !important;
+  display: grid !important;
+  place-items: center !important;
+  font-size: calc(var(--item-size, 100px) * .23) !important;
+  line-height: 1 !important;
+  background: transparent !important;
+  filter: drop-shadow(0 3px 5px rgba(50,32,18,.18)) !important;
+}
+
+@media (max-width: 680px) {
+  .calendar-sticker {
+    width: calc(var(--item-size, 100px) * .28) !important;
+    height: calc(var(--item-size, 100px) * .28) !important;
+  }
+
+  .calendar-sticker .builtin-sticker-symbol {
+    font-size: calc(var(--item-size, 100px) * .21) !important;
+  }
+}

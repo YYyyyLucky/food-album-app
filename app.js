@@ -263,10 +263,10 @@ function renderMonthCalendar() {
 function renderCalendarScene(records, background = dayBackground(records)) {
   const stickers = records.slice(0, 6).map((record, index) => {
     const fallback = nextStickerPlacement(index);
-    const x = clamp(record.x ?? fallback.x, 22, 78);
-    const y = clamp(record.y ?? fallback.y, 24, 82);
+    const x = record.x ?? fallback.x;
+    const y = record.y ?? fallback.y;
     const rotate = record.rotate ?? fallback.rotate;
-    return `<span class="calendar-sticker" data-id="${record.id}" style="left:${x}%; top:${y}%; --rotate:${rotate}deg; transform: rotate(${rotate}deg);">${renderStickerInner(record)}</span>`;
+    return `<span class="calendar-sticker" data-id="${record.id}" style="left:${x}%; top:${y}%; --rotate:${rotate}deg; --item-size:${record.size || 100}px; transform: rotate(var(--rotate));">${renderStickerContent(record, "calendar-sticker-wrap")}</span>`;
   }).join("");
   return `<div class="month-day-scene" data-bg="${escapeAttr(background)}"><div class="month-scene-stickers">${stickers}</div></div>`;
 }
@@ -288,8 +288,8 @@ function renderDailyWall() {
   activitySubtitle.textContent = countedRecords.length ? `${countedRecords.length} 张贴纸` : records.length ? "有装饰贴纸" : "这一天还没有活动贴纸。";
   dailyWall.innerHTML = records.map((record, index) => {
     const fallback = nextStickerPlacement(index);
-    const x = clamp(record.x ?? fallback.x, 22, 78);
-    const y = clamp(record.y ?? fallback.y, 24, 82);
+    const x = record.x ?? fallback.x;
+    const y = record.y ?? fallback.y;
     const rotate = record.rotate ?? fallback.rotate;
     return `<article class="daily-wall-sticker" data-id="${record.id}" style="left:${x}%; top:${y}%; --rotate:${rotate}deg; --item-size:${record.size || 100}px; transform: rotate(var(--rotate));">${renderStickerContent(record, "daily-wall-sticker-wrap")}</article>`;
   }).join("");
@@ -864,6 +864,7 @@ function nextStickerPlacement(index) {
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
 function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
 function escapeAttr(value) { return escapeHtml(value).replaceAll("`", "&#096;"); }
+
 
 
 

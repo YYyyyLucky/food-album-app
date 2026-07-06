@@ -2947,3 +2947,190 @@ html[data-board-bg="night"] .daily-wall-sticker span {
     height: 38px;
   }
 }
+
+/* Latest mobile interaction fixes */
+.capture-screen .merged-capture-shell {
+  width: 100%;
+  display: grid;
+  justify-items: center;
+}
+
+.capture-screen .merged-stage {
+  width: min(100%, 520px) !important;
+  justify-self: center;
+  margin-inline: auto !important;
+}
+
+.detail-dialog {
+  overflow: hidden !important;
+}
+
+.detail-form {
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  overflow: hidden !important;
+  grid-template-rows: minmax(170px, 34dvh) minmax(0, 1fr) auto !important;
+}
+
+.detail-hero {
+  min-height: 0 !important;
+}
+
+.detail-hero img {
+  width: min(52vw, 260px) !important;
+  height: min(52vw, 260px) !important;
+  padding: 10px !important;
+  border-radius: 26px !important;
+}
+
+.detail-fields {
+  width: min(620px, calc(100% - 28px)) !important;
+  margin: 10px auto 0 !important;
+  gap: 8px !important;
+  overflow: hidden !important;
+}
+
+.detail-fields label {
+  gap: 4px !important;
+  font-size: 13px !important;
+}
+
+.detail-fields input {
+  min-height: 38px !important;
+  padding: 8px 10px !important;
+  border-radius: 12px !important;
+}
+
+.detail-actions {
+  position: static !important;
+  grid-template-columns: 1fr 1fr 1fr !important;
+  gap: 8px !important;
+  padding: 10px max(12px, env(safe-area-inset-left)) calc(10px + env(safe-area-inset-bottom)) !important;
+}
+
+.detail-actions button {
+  min-height: 50px !important;
+  font-size: 16px !important;
+  border-radius: 999px !important;
+}
+
+.cancel-icon {
+  background: rgba(255,255,255,.92);
+  color: #2b2926;
+  border: 1px solid rgba(80,58,35,.14);
+}
+
+.daily-wall-sticker {
+  z-index: 5;
+  overflow: visible !important;
+}
+
+.daily-wall-sticker .daily-wall-sticker-wrap {
+  display: grid !important;
+  place-items: center !important;
+  width: var(--item-size, 100px) !important;
+  height: var(--item-size, 100px) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+}
+
+.daily-wall-sticker .builtin-sticker-symbol {
+  display: grid !important;
+  place-items: center !important;
+  width: var(--item-size, 100px) !important;
+  height: var(--item-size, 100px) !important;
+  font-size: calc(var(--item-size, 100px) * .72) !important;
+  line-height: 1 !important;
+  background: transparent !important;
+  filter: drop-shadow(0 10px 14px rgba(40,25,15,.22));
+}
+
+.month-scene-stickers {
+  inset: 8px !important;
+  overflow: visible !important;
+}
+
+.calendar-sticker {
+  position: absolute !important;
+  width: 26px !important;
+  height: 26px !important;
+  display: grid !important;
+  place-items: center !important;
+  translate: -50% -50%;
+  overflow: visible !important;
+  z-index: 4;
+}
+
+.calendar-sticker img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.calendar-sticker .builtin-sticker-symbol {
+  display: grid !important;
+  place-items: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+  background: transparent !important;
+}
+
+@media (max-width: 680px) {
+  .capture-screen .merged-stage {
+    width: min(94vw, 460px) !important;
+    max-height: 40dvh !important;
+  }
+
+  .detail-form {
+    grid-template-rows: minmax(150px, 30dvh) minmax(0, 1fr) auto !important;
+  }
+
+  .detail-hero img {
+    width: min(50vw, 220px) !important;
+    height: min(50vw, 220px) !important;
+  }
+
+  .calendar-sticker {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  .calendar-sticker .builtin-sticker-symbol {
+    font-size: 19px !important;
+  }
+}
+
+/* Force capture preview to center on desktop and mobile */
+.capture-screen .capture-preview-shell,
+.capture-screen .merged-capture-shell {
+  width: 100% !important;
+  max-width: none !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  justify-self: stretch !important;
+  margin: 0 auto !important;
+}
+
+.capture-screen .camera-stage,
+.capture-screen .merged-stage {
+  flex: 0 1 auto !important;
+  width: min(520px, calc(100vw - 72px)) !important;
+  max-width: 520px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  justify-self: center !important;
+}
+
+@media (max-width: 680px) {
+  .capture-screen .camera-stage,
+  .capture-screen .merged-stage {
+    width: min(92vw, 460px) !important;
+  }
+}

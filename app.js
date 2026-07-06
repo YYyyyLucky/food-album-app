@@ -76,15 +76,20 @@ bind("#closeCapture", "click", closeCapture);
 bind("#clearForm", "click", resetCaptureForm);
 bind("#exportToday", "click", exportTodayImage);
 bind("#exportMonth", "click", exportMonthImage);
-bind("#toggleTools", "click", () => activityToolPanel.classList.toggle("tools-open"));
+bind("#toggleTools", "click", (event) => {
+  event.stopPropagation();
+  activityToolPanel.classList.toggle("tools-open");
+});
 bind("#prevMonth", "click", () => changeMonth(-1));
 bind("#nextMonth", "click", () => changeMonth(1));
 bind("#clearToday", "click", clearTodayRecords);
 bind("#deleteEdit", "click", deleteEditingRecord);
+bind("#cancelEdit", "click", closeEditWithoutChanges);
 bind("#toggleCalendar", "click", toggleCalendarPanel);
 bind("#openStickerLibrary", "click", toggleStickerLibrary);
 backgroundPicker.addEventListener("change", updateBackground);
 stickerLibrary.addEventListener("click", addBuiltinSticker);
+document.addEventListener("pointerdown", handleGlobalPointerDown);
 
 cameraAction.addEventListener("click", async () => {
   if (captureReady) {
@@ -258,8 +263,8 @@ function renderMonthCalendar() {
 function renderCalendarScene(records, background = dayBackground(records)) {
   const stickers = records.slice(0, 6).map((record, index) => {
     const fallback = nextStickerPlacement(index);
-    const x = record.x ?? fallback.x;
-    const y = record.y ?? fallback.y;
+    const x = clamp(record.x ?? fallback.x, 22, 78);
+    const y = clamp(record.y ?? fallback.y, 24, 82);
     const rotate = record.rotate ?? fallback.rotate;
     return `<span class="calendar-sticker" data-id="${record.id}" style="left:${x}%; top:${y}%; --rotate:${rotate}deg; transform: rotate(${rotate}deg);">${renderStickerInner(record)}</span>`;
   }).join("");
@@ -283,8 +288,8 @@ function renderDailyWall() {
   activitySubtitle.textContent = countedRecords.length ? `${countedRecords.length} 张贴纸` : records.length ? "有装饰贴纸" : "这一天还没有活动贴纸。";
   dailyWall.innerHTML = records.map((record, index) => {
     const fallback = nextStickerPlacement(index);
-    const x = record.x ?? fallback.x;
-    const y = record.y ?? fallback.y;
+    const x = clamp(record.x ?? fallback.x, 22, 78);
+    const y = clamp(record.y ?? fallback.y, 24, 82);
     const rotate = record.rotate ?? fallback.rotate;
     return `<article class="daily-wall-sticker" data-id="${record.id}" style="left:${x}%; top:${y}%; --rotate:${rotate}deg; --item-size:${record.size || 100}px; transform: rotate(var(--rotate));">${renderStickerContent(record, "daily-wall-sticker-wrap")}</article>`;
   }).join("");
@@ -425,6 +430,10 @@ function openEdit(id) {
   editDialog.showModal();
 }
 
+function closeEditWithoutChanges() {
+  editDialog.close();
+}
+
 function clearTodayRecords() {
   const count = recordsForDate(selectedDate).length;
   if (!count || !confirm(`确定删除 ${dateTitle(selectedDate)} 的 ${count} 条记录吗？`)) return;
@@ -538,6 +547,17 @@ function changeDay(delta) {
   selectedDate = toDateInputValue(date);
   recordDate.value = selectedDate;
   renderAll();
+}
+
+function handleGlobalPointerDown(event) {
+  const target = event.target;
+  if (activityToolPanel.classList.contains("tools-open") && !target.closest(".activity-tools")) {
+    activityToolPanel.classList.remove("tools-open");
+  }
+  if (selectedStickerId && !target.closest(".food-sticker, .daily-wall-sticker, .calendar-sticker, .sticker-control") && !target.closest(".sticker-library") && !target.closest("#openStickerLibrary")) {
+    selectedStickerId = null;
+    renderStickers();
+  }
 }
 
 function toggleCalendarPanel() {
@@ -844,6 +864,9 @@ function nextStickerPlacement(index) {
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
 function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
 function escapeAttr(value) { return escapeHtml(value).replaceAll("`", "&#096;"); }
+
+
+
 
 
 

@@ -143,21 +143,19 @@
         <input id="editId" type="hidden" />
         <figure class="detail-hero"><img id="editPreview" alt="记录图片" /></figure>
         <section class="detail-fields">
-          <label>日期<input id="editDate" type="date" required /></label>
+          <label class="edit-date-field">日期<input id="editDate" type="text" readonly /></label>
           <label>名称<input id="editTitle" type="text" placeholder="可以不填" /></label>
           <label>店名<input id="editShop" type="text" placeholder="可以不填" /></label>
           <label>卡路里<input id="editKcal" type="number" min="0" step="1" /></label>
         </section>
-        <menu class="detail-actions">
-          <button id="deleteEdit" class="delete-icon" type="button" aria-label="删除">×</button>
-          <button class="save-icon" type="submit" aria-label="保存">✓</button>
-        </menu>
+        <menu class="detail-actions"><button id="deleteEdit" class="delete-icon" type="button">删除</button><button id="cancelEdit" class="cancel-icon" type="button">不变</button><button class="save-icon" type="submit">保存修改</button></menu>
       </form>
     </dialog>
 
-    <script src="./app.js?v=20260706-stickers1"></script>
+    <script src="./app.js?v=20260706-detail3"></script>
   </body>
 </html>
+
 
 
 

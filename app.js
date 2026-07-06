@@ -1,6 +1,7 @@
 ﻿const storeKey = "food-daily-widget-records-v3";
 const backgroundKey = "food-daily-widget-background";
 const legacyKeys = ["inspiration-album-records-v2", "food-cutout-records-v1"];
+const builtinStickers = ["⭐", "💖", "✨", "🌈", "🎀", "🍀", "🌸", "🌼", "🌙", "☀️", "☁️", "⚡", "🔥", "💧", "🍓", "🍒", "🍑", "🍋", "🍰", "🍩", "🍪", "🧁", "🧋", "☕", "🍜", "🍙", "🍟", "🍔", "🐱", "🐶", "🐰", "🐻", "🐼", "🦊", "🐸", "🐥", "🎧", "📷", "🎮", "🎲", "🎵", "🎨", "🪄", "💎", "🏆", "🛼", "🧸", "📌", "💌", "🫧"];
 
 const $ = (selector) => document.querySelector(selector);
 const homeScreen = $("#homeScreen");
@@ -13,6 +14,8 @@ const todayItems = $("#todayItems");
 const stickerLayer = $("#stickerLayer");
 const emptyBoard = $("#emptyBoard");
 const widgetBoard = $("#widgetBoard");
+const stickerSizeControl = $("#stickerSize");
+const stickerLibrary = $("#stickerLibrary");
 const monthTitle = $("#monthTitle");
 const monthSubtitle = $("#monthSubtitle");
 const monthGrid = $("#monthGrid");
@@ -50,12 +53,16 @@ let currentOriginal = "";
 let currentCutout = "";
 let captureReady = false;
 let dragState = null;
+let suppressDateClick = false;
 let currentBackground = localStorage.getItem(backgroundKey) || "garden";
+let selectedStickerId = null;
 
 migrateRecords();
 recordDate.value = selectedDate;
 backgroundPicker.value = currentBackground;
+stickerSizeControl.value = "100";
 applyBackground();
+renderStickerLibrary();
 renderAll();
 
 bind("#prevDay", "click", () => changeDay(-1));
@@ -75,7 +82,9 @@ bind("#nextMonth", "click", () => changeMonth(1));
 bind("#clearToday", "click", clearTodayRecords);
 bind("#deleteEdit", "click", deleteEditingRecord);
 bind("#toggleCalendar", "click", toggleCalendarPanel);
+bind("#openStickerLibrary", "click", toggleStickerLibrary);
 backgroundPicker.addEventListener("change", updateBackground);
+stickerLibrary.addEventListener("click", addBuiltinSticker);
 
 cameraAction.addEventListener("click", async () => {
   if (captureReady) {
@@ -106,7 +115,7 @@ recordKcal.addEventListener("input", () => {
 recordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   if (!currentCutout) {
-    alert("请先拍照或上传照片。");
+    alert("请先选择照片。");
     return;
   }
   saveRecord.disabled = true;
@@ -119,6 +128,7 @@ recordForm.addEventListener("submit", async (event) => {
     const placement = nextStickerPlacement(recordsForDate(recordDate.value || selectedDate).length);
     records.unshift({
       id: crypto.randomUUID(),
+      size: 100,
       date: recordDate.value || selectedDate,
       title,
       kcal,
@@ -162,10 +172,15 @@ widgetBoard.addEventListener("pointermove", handleDragMove);
 widgetBoard.addEventListener("pointerup", endDrag);
 widgetBoard.addEventListener("pointercancel", endDrag);
 stickerLayer.addEventListener("pointerdown", startDrag);
-stickerLayer.addEventListener("dblclick", (event) => {
-  const sticker = event.target.closest(".food-sticker");
-  if (sticker) openEdit(sticker.dataset.id);
-});
+dailyWall.addEventListener("pointerdown", startDrag);
+dailyWall.addEventListener("pointermove", handleDragMove);
+dailyWall.addEventListener("pointerup", endDrag);
+dailyWall.addEventListener("pointercancel", endDrag);
+monthGrid.addEventListener("pointerdown", startDrag);
+monthGrid.addEventListener("pointermove", handleDragMove);
+monthGrid.addEventListener("pointerup", endDrag);
+monthGrid.addEventListener("pointercancel", endDrag);
+stickerLayer.addEventListener("click", handleStickerLayerClick);
 timelineList.addEventListener("click", (event) => {
   const item = event.target.closest(".timeline-item[data-id]");
   if (item) openEdit(item.dataset.id);
@@ -178,6 +193,7 @@ activityDateStrip.addEventListener("click", (event) => {
   renderAll();
 });
 monthGrid.addEventListener("click", (event) => {
+  if (suppressDateClick) return;
   const item = event.target.closest("button[data-date]");
   if (!item) return;
   selectedDate = item.dataset.date;
@@ -206,9 +222,11 @@ function renderStickers() {
   const records = recordsForDate(selectedDate);
   emptyBoard.hidden = records.length > 0;
   stickerLayer.innerHTML = records.map((record) => `
-    <article class="food-sticker" data-id="${record.id}" style="left:${record.x ?? 30}%; top:${record.y ?? 30}%; --rotate:${record.rotate ?? 0}deg; transform: rotate(var(--rotate));">
-      <div class="sticker-image-wrap"><img src="${escapeAttr(recordImage(record))}" alt="${escapeAttr(record.title)}" /></div>
+    <article class="food-sticker" data-id="${record.id}" style="left:${record.x ?? 30}%; top:${record.y ?? 30}%; --rotate:${record.rotate ?? 0}deg; --item-size:${record.size || 100}px; transform: rotate(var(--rotate));">
+      ${renderStickerContent(record, "sticker-image-wrap")}
+      ${record.id === selectedStickerId ? renderStickerControls() : ""}
     </article>`).join("");
+  markSelectedSticker();
 }
 
 function renderMonthCalendar() {
@@ -217,7 +235,8 @@ function renderMonthCalendar() {
   const year = monthDate.getFullYear();
   const month = monthDate.getMonth();
   const monthRecords = records.filter((record) => record.date?.startsWith(displayMonth));
-  const daysWithRecords = new Set(monthRecords.map((record) => record.date));
+  const countedMonthRecords = monthRecords.filter(isCountedRecord);
+  const daysWithRecords = new Set(countedMonthRecords.map((record) => record.date));
   const totalDays = new Date(year, month + 1, 0).getDate();
   const startDay = new Date(year, month, 1).getDay();
   const cells = [];
@@ -226,29 +245,29 @@ function renderMonthCalendar() {
     const date = `${displayMonth}-${String(day).padStart(2, "0")}`;
     const dayRecords = recordsForDate(date);
     const active = date === selectedDate ? " active" : "";
-    cells.push(`<button class="month-cell${active}" type="button" data-date="${date}">${renderCalendarScene(dayRecords, day)}${dayRecords.length ? `<i>${dayRecords.length}</i>` : ""}</button>`);
+    cells.push(`<button class="month-cell${active}" type="button" data-date="${date}"><span class="month-day-label">${day}</span>${renderCalendarScene(dayRecords)}</button>`);
   }
   monthTitle.textContent = `${year}年${month + 1}月`;
-  monthSubtitle.textContent = `${daysWithRecords.size} 天有记录 · ${monthRecords.length} 张贴纸`;
-  monthCupCount.textContent = String(monthRecords.length);
+  monthSubtitle.textContent = `${daysWithRecords.size} 天有记录 · ${countedMonthRecords.length} 张贴纸`;
+  monthCupCount.textContent = String(countedMonthRecords.length);
   monthShopCount.textContent = `${daysWithRecords.size} 天有记录`;
-  monthStickerStrip.innerHTML = monthRecords.slice(0, 10).map((record) => `<img src="${escapeAttr(recordImage(record))}" alt="${escapeAttr(record.title)}" />`).join("");
+  monthStickerStrip.innerHTML = countedMonthRecords.slice(0, 10).map((record) => `<span class="month-strip-sticker">${renderStickerInner(record)}</span>`).join("");
   monthGrid.innerHTML = cells.join("");
 }
 
-function renderCalendarScene(records, day, background = dayBackground(records)) {
+function renderCalendarScene(records, background = dayBackground(records)) {
   const stickers = records.slice(0, 6).map((record, index) => {
     const fallback = nextStickerPlacement(index);
     const x = record.x ?? fallback.x;
     const y = record.y ?? fallback.y;
     const rotate = record.rotate ?? fallback.rotate;
-    return `<img src="${escapeAttr(recordImage(record))}" alt="${escapeAttr(record.title)}" style="left:${x}%; top:${y}%; transform: rotate(${rotate}deg);" />`;
+    return `<span class="calendar-sticker" data-id="${record.id}" style="left:${x}%; top:${y}%; --rotate:${rotate}deg; transform: rotate(${rotate}deg);">${renderStickerInner(record)}</span>`;
   }).join("");
-  return `<div class="month-day-scene" data-bg="${escapeAttr(background)}"><span class="month-day-number">${day}</span><div class="month-scene-stickers">${stickers}</div></div>`;
+  return `<div class="month-day-scene" data-bg="${escapeAttr(background)}"><div class="month-scene-stickers">${stickers}</div></div>`;
 }
 
 function renderActivityDateStrip() {
-  activityDateStrip.innerHTML = weekDates(selectedDate).map((date) => {
+  activityDateStrip.innerHTML = recentDatesThroughToday(45).map((date) => {
     const dateValue = toDateInputValue(date);
     const records = recordsForDate(dateValue);
     const active = dateValue === selectedDate ? " active" : "";
@@ -260,23 +279,24 @@ function renderActivityDateStrip() {
 function renderDailyWall() {
   const records = recordsForDate(selectedDate);
   activityTitle.textContent = `${formatMonthDay(selectedDate)} 活动动态`;
-  activitySubtitle.textContent = records.length ? `${records.length} 张贴纸` : "这一天还没有活动贴纸。";
+  const countedRecords = records.filter(isCountedRecord);
+  activitySubtitle.textContent = countedRecords.length ? `${countedRecords.length} 张贴纸` : records.length ? "有装饰贴纸" : "这一天还没有活动贴纸。";
   dailyWall.innerHTML = records.map((record, index) => {
     const fallback = nextStickerPlacement(index);
     const x = record.x ?? fallback.x;
     const y = record.y ?? fallback.y;
     const rotate = record.rotate ?? fallback.rotate;
-    return `<article class="daily-wall-sticker" style="left:${x}%; top:${y}%; --rotate:${rotate}deg; transform: rotate(var(--rotate));"><img src="${escapeAttr(recordImage(record))}" alt="${escapeAttr(record.title)}" /></article>`;
+    return `<article class="daily-wall-sticker" data-id="${record.id}" style="left:${x}%; top:${y}%; --rotate:${rotate}deg; --item-size:${record.size || 100}px; transform: rotate(var(--rotate));">${renderStickerContent(record, "daily-wall-sticker-wrap")}</article>`;
   }).join("");
 }
 
 function renderTimeline() {
-  const records = recordsForDate(selectedDate);
+  const records = recordsForDate(selectedDate).filter((record) => record.kind !== "builtin");
   timelineList.innerHTML = records.length ? records.map((record) => `
     <article class="timeline-item" data-id="${record.id}" role="button" tabindex="0">
       <div><time class="timeline-time">${formatMonthDay(record.date)} ${timeText(record.createdAt)}</time>${record.title ? `<strong class="timeline-title">${escapeHtml(record.title)}</strong>` : ""}${record.shop ? `<p class="timeline-note">${escapeHtml(record.shop)}</p>` : ""}</div>
       <div class="timeline-image"><img src="${escapeAttr(recordImage(record))}" alt="${escapeAttr(record.title)}" /><span class="timeline-kcal">${record.kcal || 0} kcal</span></div>
-    </article>`).join("") : '<p class="timeline-note empty-timeline">这一天还没有活动记录。</p>';
+    </article>`).join("") : "";
 }
 
 function openCapture() {
@@ -312,6 +332,7 @@ function showTimeline() {
   $("#homeNav").classList.remove("nav-active");
   $("#timelineNav").classList.add("nav-active");
   renderAll();
+  scrollDateStripToToday();
 }
 
 function resetCaptureForm() {
@@ -349,7 +370,7 @@ async function openCamera() {
     emptyState.hidden = true;
     cameraAction.textContent = "拍照";
   } catch (error) {
-    alert("无法打开相机，请检查权限，或改用上传照片。");
+    alert("无法打开相机，请选择照片。");
   }
 }
 
@@ -420,31 +441,87 @@ function deleteEditingRecord() {
 }
 
 function startDrag(event) {
-  const sticker = event.target.closest(".food-sticker");
+  const sticker = event.target.closest(".food-sticker, .daily-wall-sticker, .calendar-sticker");
   if (!sticker) return;
-  const board = stickerLayer.getBoundingClientRect();
+  if (event.target.closest(".sticker-delete")) return;
+  if (sticker.dataset.id) selectSticker(sticker.dataset.id, false);
+  const layer = sticker.closest("#stickerLayer, #dailyWall, .month-scene-stickers");
+  if (!layer) return;
+  const board = layer.getBoundingClientRect();
   const rect = sticker.getBoundingClientRect();
-  dragState = { id: sticker.dataset.id, pointerId: event.pointerId, offsetX: event.clientX - rect.left, offsetY: event.clientY - rect.top, board };
-  sticker.setPointerCapture(event.pointerId);
+  const record = loadRecords().find((item) => item.id === sticker.dataset.id) || {};
+  const mode = event.target.closest(".sticker-resize") ? "resize" : event.target.closest(".sticker-rotate") ? "rotate" : "move";
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const startAngle = Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180 / Math.PI;
+  dragState = {
+    id: sticker.dataset.id,
+    pointerId: event.pointerId,
+    mode,
+    offsetX: event.clientX - rect.left,
+    offsetY: event.clientY - rect.top,
+    startX: event.clientX,
+    startY: event.clientY,
+    startSize: Number(record.size || 100),
+    startRotate: Number(record.rotate || 0),
+    startAngle,
+    centerX,
+    centerY,
+    board,
+    layer,
+    moved: false,
+  };
+  sticker.setPointerCapture?.(event.pointerId);
+  event.preventDefault();
 }
 
 function handleDragMove(event) {
   if (!dragState || event.pointerId !== dragState.pointerId) return;
-  const sticker = stickerLayer.querySelector(`[data-id="${dragState.id}"]`);
+  const sticker = dragState.layer.querySelector(`[data-id="${dragState.id}"]`);
   if (!sticker) return;
-  const x = clamp(((event.clientX - dragState.board.left - dragState.offsetX) / dragState.board.width) * 100, 0, 78);
-  const y = clamp(((event.clientY - dragState.board.top - dragState.offsetY) / dragState.board.height) * 100, 0, 78);
+  dragState.moved = true;
+  if (dragState.mode === "resize") {
+    const delta = (event.clientX - dragState.startX + event.clientY - dragState.startY) * 0.55;
+    const size = clamp(Math.round(dragState.startSize + delta), 42, 230);
+    sticker.style.setProperty("--item-size", `${size}px`);
+    return;
+  }
+  if (dragState.mode === "rotate") {
+    const angle = Math.atan2(event.clientY - dragState.centerY, event.clientX - dragState.centerX) * 180 / Math.PI;
+    const rotate = Math.round(dragState.startRotate + angle - dragState.startAngle);
+    sticker.style.setProperty("--rotate", `${rotate}deg`);
+    sticker.style.transform = "rotate(var(--rotate))";
+    return;
+  }
+  const x = clamp(((event.clientX - dragState.board.left - dragState.offsetX) / dragState.board.width) * 100, 0, 82);
+  const y = clamp(((event.clientY - dragState.board.top - dragState.offsetY) / dragState.board.height) * 100, 0, 82);
   sticker.style.left = `${x}%`;
   sticker.style.top = `${y}%`;
 }
 
 function endDrag(event) {
   if (!dragState || event.pointerId !== dragState.pointerId) return;
-  const sticker = stickerLayer.querySelector(`[data-id="${dragState.id}"]`);
+  const sticker = dragState.layer.querySelector(`[data-id="${dragState.id}"]`);
   if (sticker) {
-    saveRecords(loadRecords().map((record) => record.id === dragState.id ? { ...record, x: parseFloat(sticker.style.left), y: parseFloat(sticker.style.top) } : record));
+    const size = parseFloat(sticker.style.getPropertyValue("--item-size")) || undefined;
+    const rotate = parseFloat(sticker.style.getPropertyValue("--rotate")) || 0;
+    saveRecords(loadRecords().map((record) => record.id === dragState.id ? {
+      ...record,
+      x: parseFloat(sticker.style.left) || record.x,
+      y: parseFloat(sticker.style.top) || record.y,
+      size: size || record.size,
+      rotate,
+    } : record));
+  }
+  if (dragState.moved) {
+    suppressDateClick = true;
+    setTimeout(() => { suppressDateClick = false; }, 0);
   }
   dragState = null;
+  renderAll();
+}
+
+function scrollDateStripToToday() {
 }
 
 function changeMonth(delta) {
@@ -473,6 +550,37 @@ function updateBackground() {
   localStorage.setItem(backgroundKey, currentBackground);
   applyBackground();
   renderAll();
+}
+
+function handleStickerLayerClick(event) {
+  const deleteButton = event.target.closest(".sticker-delete");
+  if (deleteButton) {
+    deleteSticker(deleteButton.closest(".food-sticker")?.dataset.id);
+    return;
+  }
+  const sticker = event.target.closest(".food-sticker");
+  if (sticker) selectSticker(sticker.dataset.id);
+}
+
+function deleteSticker(id) {
+  if (!id) return;
+  saveRecords(loadRecords().filter((record) => record.id !== id));
+  if (selectedStickerId === id) selectedStickerId = null;
+  renderAll();
+}
+
+function renderStickerControls() {
+  return `<button class="sticker-control sticker-delete" type="button" aria-label="删除贴纸">×</button><span class="sticker-control sticker-rotate" aria-label="旋转贴纸">↻</span><span class="sticker-control sticker-resize" aria-label="缩放贴纸">↘</span>`;
+}
+
+function selectSticker(id, rerender = true) {
+  selectedStickerId = id;
+  markSelectedSticker();
+  if (rerender) renderStickers();
+}
+
+function markSelectedSticker() {
+  document.querySelectorAll(".food-sticker").forEach((item) => item.classList.toggle("is-selected", item.dataset.id === selectedStickerId));
 }
 
 function applyBackground() {
@@ -510,12 +618,59 @@ function recordsForDate(date) {
   return loadRecords().filter((record) => record.date === date).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
 }
 
+function isCountedRecord(record) {
+  return record?.kind !== "builtin";
+}
+
 function totalKcal(records) {
   return records.reduce((sum, record) => sum + Number(record.kcal || 0), 0);
 }
 
 function recordImage(record) {
   return record?.cutout || record?.image || record?.original || record?.photo || record?.src || "";
+}
+
+function renderStickerInner(record) {
+  if (record.kind === "builtin") return `<span class="builtin-sticker-symbol">${escapeHtml(record.sticker || "✨")}</span>`;
+  return `<img src="${escapeAttr(recordImage(record))}" alt="${escapeAttr(record.title)}" />`;
+}
+
+function renderStickerContent(record, className) {
+  return `<div class="${className}">${renderStickerInner(record)}</div>`;
+}
+
+function renderStickerLibrary() {
+  stickerLibrary.innerHTML = builtinStickers.map((sticker) => `<button type="button" data-sticker="${escapeAttr(sticker)}">${escapeHtml(sticker)}</button>`).join("");
+}
+
+function toggleStickerLibrary() {
+  stickerLibrary.hidden = !stickerLibrary.hidden;
+}
+
+function addBuiltinSticker(event) {
+  const button = event.target.closest("button[data-sticker]");
+  if (!button) return;
+  const records = loadRecords();
+  const placement = nextStickerPlacement(recordsForDate(selectedDate).length);
+  const record = {
+    id: crypto.randomUUID(),
+    kind: "builtin",
+    sticker: button.dataset.sticker,
+    title: "贴纸",
+    kcal: 0,
+    shop: "",
+    date: selectedDate,
+    background: currentBackground,
+    createdAt: new Date().toISOString(),
+    size: 100,
+    ...placement,
+  };
+  records.unshift(record);
+  saveRecords(records);
+  selectedStickerId = record.id;
+  stickerSizeControl.value = "100";
+  stickerLibrary.hidden = true;
+  renderAll();
 }
 
 function dayBackground(records) {
@@ -678,7 +833,7 @@ function toDateInputValue(date) { return new Date(date.getTime() - date.getTimez
 function dateTitle(dateValue) { const d = new Date(`${dateValue}T00:00:00`); return `${d.getMonth() + 1}月${d.getDate()}日`; }
 function formatMonthDay(dateValue) { return dateTitle(dateValue); }
 function timeText(value) { const d = value ? new Date(value) : new Date(); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; }
-function weekDates(dateValue) { const d = new Date(`${dateValue}T00:00:00`); const day = d.getDay() || 7; d.setDate(d.getDate() - day + 1); return Array.from({ length: 7 }, (_, i) => { const next = new Date(d); next.setDate(d.getDate() + i); return next; }); }
+function recentDatesThroughToday(count) { const end = new Date(`${today()}T00:00:00`); return Array.from({ length: count }, (_, i) => { const d = new Date(end); d.setDate(end.getDate() - count + 1 + i); return d; }); }
 function weekday(date) { return ["周日", "周一", "周二", "周三", "周四", "周五", "周六"][date.getDay()]; }
 function nextStickerPlacement(index) {
   const spots = [{ x: 12, y: 10, rotate: -10 }, { x: 58, y: 12, rotate: 8 }, { x: 36, y: 34, rotate: -4 }, { x: 68, y: 48, rotate: 10 }, { x: 12, y: 56, rotate: -8 }, { x: 42, y: 66, rotate: 6 }, { x: 72, y: 18, rotate: -6 }, { x: 22, y: 34, rotate: 7 }];
@@ -689,3 +844,17 @@ function nextStickerPlacement(index) {
 function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
 function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
 function escapeAttr(value) { return escapeHtml(value).replaceAll("`", "&#096;"); }
+
+
+
+
+
+
+
+
+
+
+
+
+
+

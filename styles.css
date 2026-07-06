@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   color-scheme: light;
   font-family: Inter, "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
   --green: #8ca857;
@@ -628,7 +628,7 @@ body {
 }
 
 .board-bg::after {
-  content: "今日饮食贴纸";
+  content: "浠婃棩楗璐寸焊";
   position: absolute;
   left: 30px;
   top: 28px;
@@ -1051,7 +1051,7 @@ body {
 }
 
 .month-sticker-strip:empty::before {
-  content: "这个月还没有贴纸";
+  content: "杩欎釜鏈堣繕娌℃湁璐寸焊";
   color: #9c9288;
   font-weight: 800;
 }
@@ -1135,7 +1135,7 @@ body {
 }
 
 .board-bg::after {
-  content: "今日活动贴纸";
+  content: "浠婃棩娲诲姩璐寸焊";
 }
 
 .widget-board {
@@ -1695,7 +1695,7 @@ html[data-board-bg="night"] .daily-wall-sticker span {
 }
 
 .daily-wall-card::after {
-  content: "5s  ·  Aa  ·  涂鸦  ·  背景";
+  content: "5s  路  Aa  路  娑傞甫  路  鑳屾櫙";
   position: absolute;
   left: 50%;
   bottom: 22px;
@@ -2433,5 +2433,517 @@ html[data-board-bg="night"] .daily-wall-sticker span {
   .timeline-screen {
     max-height: calc(100dvh - 82px);
     overflow-y: auto;
+  }
+}
+
+/* Requested adjustments: cleaner capture, resizable stickers, better calendar/date strip */
+.sticker-size-control {
+  margin-top: 8px;
+  max-width: 220px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 8px;
+  color: #6b625a;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.sticker-size-control input {
+  min-height: 28px;
+  padding: 0;
+  accent-color: #176653;
+}
+
+.food-sticker {
+  width: var(--sticker-size, 100px) !important;
+  min-height: var(--sticker-size, 100px) !important;
+}
+
+.sticker-image-wrap {
+  width: var(--sticker-size, 100px) !important;
+  height: var(--sticker-size, 100px) !important;
+}
+
+.capture-screen #recordForm {
+  grid-template-rows: auto minmax(0, .9fr) auto auto;
+}
+
+.capture-screen .dialog-header {
+  align-items: center;
+}
+
+.capture-screen .merged-stage {
+  max-height: 30dvh !important;
+  min-height: 210px !important;
+}
+
+.capture-screen .capture-bottom-bar {
+  display: grid;
+  grid-template-columns: 1.2fr .8fr 1fr;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  gap: 8px;
+}
+
+.capture-screen #cameraAction[hidden] {
+  display: none !important;
+}
+
+.capture-screen .capture-file-button {
+  grid-column: 1 / -1;
+  background: #176653;
+  font-size: 18px;
+}
+
+.capture-screen .capture-bottom-bar .soft-button,
+.capture-screen .capture-bottom-bar #saveRecord {
+  min-height: 44px;
+}
+
+.activity-date-strip {
+  display: flex !important;
+  justify-content: flex-start;
+  overflow-x: auto !important;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+
+.activity-date-pill {
+  flex: 0 0 50px !important;
+  scroll-snap-align: center;
+}
+
+.month-cell {
+  position: relative;
+  overflow: visible !important;
+  padding-top: 26px !important;
+  background: transparent !important;
+}
+
+.month-cell i,
+.month-day-number {
+  display: none !important;
+}
+
+.month-day-label {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  z-index: 4;
+  width: 26px;
+  height: 26px;
+  transform: translateX(-50%);
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255,255,255,.92);
+  color: #665f58;
+  font-weight: 900;
+  font-size: 14px;
+  box-shadow: 0 5px 12px rgba(57,39,24,.10);
+}
+
+.month-day-scene {
+  inset: 28px 2px 0 !important;
+  border-radius: 18px !important;
+}
+
+.month-scene-stickers {
+  inset: 0 !important;
+}
+
+.calendar-sticker,
+.daily-wall-sticker,
+.food-sticker {
+  cursor: grab;
+  touch-action: none;
+}
+
+.calendar-sticker:active,
+.daily-wall-sticker:active,
+.food-sticker:active {
+  cursor: grabbing;
+  z-index: 20;
+}
+
+.daily-wall-sticker {
+  width: var(--sticker-size, 100px) !important;
+}
+
+.daily-wall-sticker img {
+  width: var(--sticker-size, 100px) !important;
+  height: var(--sticker-size, 100px) !important;
+}
+
+@media (max-width: 680px) {
+  .sticker-size-control {
+    max-width: 190px;
+    margin-top: 4px;
+    font-size: 12px;
+  }
+
+  .capture-screen #recordForm {
+    grid-template-rows: auto minmax(0, .8fr) auto auto;
+  }
+
+  .capture-screen .merged-stage {
+    max-height: 28dvh !important;
+    min-height: 190px !important;
+  }
+
+  .capture-screen .compact-form-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .capture-screen .capture-bottom-bar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .capture-screen .capture-file-button {
+    grid-column: 1 / -1;
+  }
+
+  .activity-date-pill {
+    flex-basis: 46px !important;
+  }
+
+  .month-cell {
+    padding-top: 22px !important;
+  }
+
+  .month-day-label {
+    width: 22px;
+    height: 22px;
+    font-size: 12px;
+  }
+
+  .month-day-scene {
+    inset: 24px 1px 0 !important;
+    border-radius: 14px !important;
+  }
+}
+
+/* Per-sticker sizing and single-column capture fields */
+.food-sticker {
+  width: var(--item-size, 100px) !important;
+  min-height: var(--item-size, 100px) !important;
+}
+
+.food-sticker .sticker-image-wrap {
+  width: var(--item-size, 100px) !important;
+  height: var(--item-size, 100px) !important;
+}
+
+.food-sticker.is-selected .sticker-image-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border: 3px solid #176653;
+  border-radius: 28px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.daily-wall-sticker {
+  width: var(--item-size, 100px) !important;
+}
+
+.daily-wall-sticker img {
+  width: var(--item-size, 100px) !important;
+  height: var(--item-size, 100px) !important;
+}
+
+@media (max-width: 680px) {
+  .capture-screen .compact-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.capture-screen .compact-form-grid {
+  grid-template-columns: 1fr !important;
+}
+
+
+/* Main sticker card background and built-in sticker library */
+.date-line #recordCount {
+  display: none !important;
+}
+
+.home-tools {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sticker-library-button {
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.sticker-library {
+  margin-top: 8px;
+  max-width: min(360px, calc(100vw - 32px));
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 6px 2px 8px;
+  scrollbar-width: none;
+}
+
+.sticker-library[hidden] {
+  display: none !important;
+}
+
+.sticker-library::-webkit-scrollbar {
+  display: none;
+}
+
+.sticker-library button {
+  flex: 0 0 40px;
+  width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 14px;
+  background: rgba(255,255,255,.88);
+  color: #25211d;
+  font-size: 22px;
+  box-shadow: 0 8px 18px rgba(50,32,18,.10);
+}
+
+.food-sticker {
+  background: transparent !important;
+  border-radius: 0 !important;
+  backdrop-filter: none !important;
+}
+
+.food-sticker .sticker-image-wrap,
+.daily-wall-sticker .daily-wall-sticker-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 7px;
+  border-radius: 24px;
+  background: rgba(255,255,255,.94) !important;
+  box-shadow: 0 12px 24px rgba(50,32,18,.18);
+}
+
+.food-sticker .sticker-image-wrap::after {
+  display: none !important;
+}
+
+.food-sticker .sticker-image-wrap img,
+.daily-wall-sticker .daily-wall-sticker-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 17px;
+  filter: none !important;
+}
+
+.builtin-sticker-symbol {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: calc(var(--item-size, 100px) * .56);
+  line-height: 1;
+  filter: drop-shadow(0 8px 10px rgba(50,32,18,.16));
+}
+
+.calendar-sticker .builtin-sticker-symbol {
+  font-size: 22px;
+}
+
+@media (max-width: 680px) {
+  .home-tools {
+    margin-top: 5px;
+  }
+
+  .sticker-library button {
+    flex-basis: 36px;
+    width: 36px;
+    min-height: 36px;
+    font-size: 20px;
+  }
+}
+
+/* No sticker backing cards: show only sticker/photo content */
+.food-sticker,
+.daily-wall-sticker {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  backdrop-filter: none !important;
+  padding: 0 !important;
+}
+
+.food-sticker .sticker-image-wrap,
+.daily-wall-sticker .daily-wall-sticker-wrap {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+
+.food-sticker .sticker-image-wrap::after,
+.food-sticker .sticker-image-wrap::before,
+.daily-wall-sticker .daily-wall-sticker-wrap::after,
+.daily-wall-sticker .daily-wall-sticker-wrap::before {
+  display: none !important;
+  content: none !important;
+}
+
+.food-sticker .sticker-image-wrap img,
+.daily-wall-sticker .daily-wall-sticker-wrap img,
+.daily-wall-sticker img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  filter: drop-shadow(0 10px 14px rgba(50,32,18,.18)) !important;
+}
+
+.food-sticker.is-selected .sticker-image-wrap {
+  outline: 3px solid rgba(23,102,83,.65);
+  outline-offset: 5px;
+  border-radius: 12px;
+}
+
+.builtin-sticker-symbol {
+  background: transparent !important;
+}
+
+/* Direct sticker editing: no size slider */
+.sticker-size-control {
+  display: none !important;
+}
+
+.food-sticker.is-selected .sticker-image-wrap {
+  outline: 2px dashed rgba(23,102,83,.75);
+  outline-offset: 8px;
+  border-radius: 12px;
+}
+
+.sticker-control {
+  position: absolute;
+  z-index: 30;
+  width: 26px;
+  height: 26px;
+  min-height: 26px;
+  padding: 0;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(24, 22, 20, .88);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,.7);
+  box-shadow: 0 6px 16px rgba(0,0,0,.18);
+  font-size: 16px;
+  line-height: 1;
+  touch-action: none;
+}
+
+.sticker-delete {
+  left: -15px;
+  top: -15px;
+}
+
+.sticker-rotate {
+  right: -15px;
+  top: -15px;
+  cursor: grab;
+}
+
+.sticker-resize {
+  right: -15px;
+  bottom: -15px;
+  cursor: nwse-resize;
+}
+
+@media (max-width: 680px) {
+  .sticker-control {
+    width: 24px;
+    height: 24px;
+    min-height: 24px;
+    font-size: 14px;
+  }
+}
+
+/* Built-in stickers must render on wall and calendar, but not count as records */
+.daily-wall-sticker .daily-wall-sticker-wrap {
+  width: var(--item-size, 100px) !important;
+  height: var(--item-size, 100px) !important;
+}
+
+.daily-wall-sticker .builtin-sticker-symbol {
+  width: var(--item-size, 100px) !important;
+  height: var(--item-size, 100px) !important;
+  font-size: calc(var(--item-size, 100px) * .72) !important;
+}
+
+.calendar-sticker {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  translate: -50% -50%;
+  filter: drop-shadow(0 5px 7px rgba(40,25,15,.28));
+  touch-action: none;
+}
+
+.calendar-sticker img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.calendar-sticker .builtin-sticker-symbol {
+  width: 100% !important;
+  height: 100% !important;
+  font-size: 24px !important;
+}
+
+.month-strip-sticker {
+  width: 46px;
+  height: 46px;
+  display: inline-grid;
+  place-items: center;
+  margin-right: 8px;
+}
+
+.month-strip-sticker img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.month-strip-sticker .builtin-sticker-symbol {
+  font-size: 28px !important;
+}
+
+@media (max-width: 680px) {
+  .calendar-sticker {
+    width: 24px;
+    height: 24px;
+  }
+
+  .calendar-sticker .builtin-sticker-symbol {
+    font-size: 20px !important;
+  }
+
+  .month-strip-sticker {
+    width: 38px;
+    height: 38px;
   }
 }

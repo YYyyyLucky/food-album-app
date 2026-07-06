@@ -8,7 +8,7 @@
     <link rel="manifest" href="./manifest.json" />
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icon.svg" />
-    <link rel="stylesheet" href="./styles.css?v=20260706-fit1" />
+    <link rel="stylesheet" href="./styles.css?v=20260706-stickers1" />
   </head>
   <body>
     <main class="phone-shell">
@@ -22,6 +22,7 @@
               <strong id="recordCount">0</strong>
             </div>
             <p>可自由拖动今日活动贴纸，自动保存。</p>
+            <div class="home-tools"><label class="sticker-size-control">贴纸大小<input id="stickerSize" type="range" min="64" max="150" step="2" value="100" /></label><button id="openStickerLibrary" class="soft-button sticker-library-button" type="button">贴纸库</button></div><div id="stickerLibrary" class="sticker-library" hidden></div>
           </div>
         </header>
 
@@ -122,8 +123,8 @@
           </div>
 
           <menu class="capture-bottom-bar">
-            <button id="cameraAction" type="button">打开相机</button>
-            <label class="file-button">上传照片<input id="fileInput" type="file" accept="image/*" /></label>
+            <button id="cameraAction" type="button" hidden>打开相机</button>
+            <label class="file-button capture-file-button">相机<input id="fileInput" type="file" accept="image/*" /></label>
             <button id="clearForm" class="soft-button" type="button">清空</button>
             <button id="saveRecord" type="submit" disabled>加入今日</button>
           </menu>
@@ -154,6 +155,9 @@
       </form>
     </dialog>
 
-    <script src="./app.js?v=20260706-fit1"></script>
+    <script src="./app.js?v=20260706-stickers1"></script>
   </body>
 </html>
+
+
+
